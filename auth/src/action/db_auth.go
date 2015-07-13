@@ -23,14 +23,22 @@ func initdb() (*sql.DB, error) {
 
 //通过resId获取资源信息
 func GetRes(resId string) *Res {
+/*	
 	db, err := initdb()
 	if err != nil {
 		fmt.Println("连接数据库失败")
 	}
 	defer db.Close()
+*/
+	mydb := common.GetDB()
+	if mydb == nil {
+		fmt.Println("get db connection error")
+		return -1
+	}
+	defer common.FreeDB(mydb)
 
 	sqlStr := "select * from resource_tab where res_id=? limit 1"
-	rows, err := db.Query(sqlStr, resId)
+	rows, err := mydb.Query(sqlStr, resId)
 	if err != nil {
 		return nil
 	} else {
