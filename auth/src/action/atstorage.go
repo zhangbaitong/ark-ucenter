@@ -138,7 +138,7 @@ func (s *AtStorage) LoadAuthorize(code string) (*osin.AuthorizeData, error) {
 	var authorizeData AuthorizeData
 	fromJSON(value, &authorizeData)
 	// fmt.Println(">>>>>>", authorizeData)
-	fmt.Println(">>>>>>", authorizeData.transfer())
+	//fmt.Println(">>>>>>", authorizeData.transfer())
 	// return &authorizeData, nil
 	return authorizeData.transfer(), nil
 }
@@ -175,19 +175,6 @@ func (s *AtStorage) LoadAccess(code string) (*osin.AccessData, error) {
 	var accessData AccessData
 	fromJSON(ret, &accessData)	
 	return accessData.transfer(), nil
-}
-
-func (s *AtStorage) LoadAccess_tom(code string) (*AccessData, error) {
-	fmt.Printf("LoadAccess:%s\n", code)
-	strKey:="access:" + code
-	ret := getValue(strKey)
-	if ret == "" {
-		return nil, errors.New("access not found")
-	}
-	fmt.Printf("LoadAccess:\n%s\n", ret)
-	var accessData AccessData
-	fromJSON(ret, &accessData)	
-	return &accessData, nil
 }
 
 func (s *AtStorage) RemoveAccess(code string) error {

@@ -58,7 +58,6 @@ func (oauth *OAuth) GetAuthorize(w http.ResponseWriter, r *http.Request, _ httpr
 		//未登录，则返回页面，出现 用户名密码框+授权并登陆按钮+权限列表
 		oauth.View.HTML(w, http.StatusOK, "oauth", map[string]string{"AuthorizeDisplay": "none", "LoginDisplay": "block", "RequestURI": r.RequestURI})
 	}
-	//fmt.Println("GetAuthorize:\r\n")
 }
 
 func (oauth *OAuth) PostAuthorize(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -82,11 +81,9 @@ func (oauth *OAuth) PostAuthorize(w http.ResponseWriter, r *http.Request, _ http
 	if ar != nil {
 		//发放code 或token ,附加到redirect_uri后，并跳转
 		//存储acname，acid,rsid,clientid,clientSecret等必要信息
-		//ar.UserData = struct{ Acname string }{Acname: acname}
 		ar.UserData = struct{ Acname string }{Acname: acname}
 		ar.Authorized = true
 		oauth.Server.FinishAuthorizeRequest(resp, r, ar)
-		//fmt.Println("Write Authorize End:\r\n")
 	}
 	osin.OutputJSON(resp, w, r)
 }
@@ -204,7 +201,6 @@ func (oauth *OAuth) Get(w http.ResponseWriter, req *http.Request, ps httprouter.
 	}	
 	client_id := accessData.Client.GetId()
 
-	//fmt.Printf("acid=%d;client_id=%s\r\n",acid,client_id)
 	jr := make(map[string]interface{})
 	jr["client_id"]=client_id
 	if acid != -1 && client_id != "" {

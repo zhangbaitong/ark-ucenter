@@ -31,7 +31,6 @@ func NewRegister() *Register {
 }
 
 func (register *Register) Post(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-fmt.Println("GetAuthorize:\r\n")
 	acname := req.FormValue("acname")
 	password := req.FormValue("password")
 	account := Account{Ac_name: acname, Ac_password: password,
