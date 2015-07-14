@@ -1,9 +1,8 @@
 package action
 
 import (
-	"database/sql"
+	"common"
 	"fmt"
-	_ "github.com/Go-SQL-Driver/MySQL"
 )
 
 type Res struct {
@@ -17,23 +16,12 @@ type Res struct {
 	Create_time    int
 }
 
-func initdb() (*sql.DB, error) {
-	return sql.Open("mysql", "root:111111@tcp(117.78.19.76:3306)/at_db")
-}
-
 //通过resId获取资源信息
 func GetRes(resId string) *Res {
-/*	
-	db, err := initdb()
-	if err != nil {
-		fmt.Println("连接数据库失败")
-	}
-	defer db.Close()
-*/
 	mydb := common.GetDB()
 	if mydb == nil {
 		fmt.Println("get db connection error")
-		return -1
+		return nil
 	}
 	defer common.FreeDB(mydb)
 
@@ -47,4 +35,31 @@ func GetRes(resId string) *Res {
 		rows.Scan(&r.Res_id, &r.Res_name, &r.Owner_acid, &r.Operator_acid, &r.Interface_url, &r.Interface_type, &r.Status, &r.Create_time)
 		return &r
 	}
+}
+
+//通过appId查询资源Id
+//通过resId获取资源信息
+func GetResIds(appId string) (resId string) {
+	fmt.Println("345")
+	mydb := common.GetDB()
+	if mydb == nil {
+		fmt.Println("get db connection error")
+		return ""
+	}
+	defer common.FreeDB(mydb)
+
+	sqlStr := "select res_id from client_secret_tab where app_id=? limit 1"
+	rows, err := mydb.Query(sqlStr, appId)
+	if err == nil {
+		resId = ""
+		for rows.Next() {
+			rows.Scan(&resId)
+		}
+		return resId
+	}
+	return ""
+}
+
+func Test() {
+	fmt.Println("test")
 }

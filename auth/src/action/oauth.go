@@ -2,6 +2,7 @@ package action
 
 import (
 	"common"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/RangelReale/osin"
@@ -10,7 +11,6 @@ import (
 	"github.com/unrolled/render"
 	"net/http"
 	"time"
-	"encoding/json"
 )
 
 type (
@@ -58,14 +58,15 @@ func (oauth *OAuth) GetAuthorize(w http.ResponseWriter, r *http.Request, _ httpr
 		//未登录，则返回页面，出现 用户名密码框+授权并登陆按钮+权限列表
 		oauth.View.HTML(w, http.StatusOK, "oauth", map[string]string{"AuthorizeDisplay": "none", "LoginDisplay": "block", "RequestURI": r.RequestURI})
 	}
+	//fmt.Println("GetAuthorize:\r\n")
 }
 
 func (oauth *OAuth) PostAuthorize(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-     fmt.Println("PostAuthorize:\r\n")
+	fmt.Println("PostAuthorize:\r\n")
 	acname := oauth.Logged(w, r)
 	if acname == "" {
 		//使用提交的表单登陆
-		acname, _= oauth.Login(w, r)
+		acname, _ = oauth.Login(w, r)
 		//登陆失败
 		if acname == "" {
 			//返回页面，出现 登陆失败提示，用户名密码框+授权并登陆按钮+权限列表
@@ -81,15 +82,17 @@ func (oauth *OAuth) PostAuthorize(w http.ResponseWriter, r *http.Request, _ http
 	if ar != nil {
 		//发放code 或token ,附加到redirect_uri后，并跳转
 		//存储acname，acid,rsid,clientid,clientSecret等必要信息
+		//ar.UserData = struct{ Acname string }{Acname: acname}
 		ar.UserData = struct{ Acname string }{Acname: acname}
 		ar.Authorized = true
 		oauth.Server.FinishAuthorizeRequest(resp, r, ar)
+		//fmt.Println("Write Authorize End:\r\n")
 	}
 	osin.OutputJSON(resp, w, r)
 }
 
 func (oauth *OAuth) Token(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-fmt.Println("Token:\r\n")
+	fmt.Println("Token:\r\n")
 	resp := oauth.Server.NewResponse()
 	defer resp.Close()
 
@@ -129,7 +132,7 @@ func (oauth *OAuth) Logged(w http.ResponseWriter, req *http.Request) string {
 }
 
 func (oauth *OAuth) Login(w http.ResponseWriter, req *http.Request) (string, error) {
-fmt.Println("Login:\r\n")
+	fmt.Println("Login:\r\n")
 	acname := req.FormValue("acname")
 	password := req.FormValue("password")
 	if acname == "" || password == "" {
@@ -177,7 +180,6 @@ func (l *Logout) Get(w http.ResponseWriter, req *http.Request, _ httprouter.Para
 	http.SetCookie(w, &cookie)
 }
 
-
 //生成cookie，放到reponse对象
 func (oauth *OAuth) GenerateCookie(w http.ResponseWriter, r *http.Request, userNmae string, number int) {
 	timeLength := 24 * time.Hour
@@ -187,32 +189,32 @@ func (oauth *OAuth) GenerateCookie(w http.ResponseWriter, r *http.Request, userN
 	http.SetCookie(w, &cookie)
 }
 
-
 func (oauth *OAuth) Get(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	//用户登陆成功，并确认授权，则进行下一步,根据请求,发放code 或token
-	strToken:=req.Header.Get("Access_token")
-	accessData,_:=oauth.Server.Storage.LoadAccess(strToken)
-		fmt.Println(accessData)
-	UserData:=accessData.UserData.(map[string]interface{})
-	user_name:=UserData["Acname"].(string)
+	strToken := req.Header.Get("Access_token")
+	accessData, _ := oauth.Server.Storage.LoadAccess(strToken)
+	fmt.Println(accessData)
+	UserData := accessData.UserData.(map[string]interface{})
+	user_name := UserData["Acname"].(string)
 	acid := getAcId(user_name)
-	if accessData.Client==nil{
+	if accessData.Client == nil {
 		fmt.Println("Get Client Faild!!!")
-	}	
+	}
 	client_id := accessData.Client.GetId()
 
+	//fmt.Printf("acid=%d;client_id=%s\r\n",acid,client_id)
 	jr := make(map[string]interface{})
-	jr["client_id"]=client_id
+	jr["client_id"] = client_id
 	if acid != -1 && client_id != "" {
-		openId := getOpenId("000001",client_id, acid)
-		jr["openid"]=openId
+		openId := getOpenId("000001", client_id, acid)
+		jr["openid"] = openId
 	}
 
 	result, err := json.Marshal(jr)
 	if err != nil {
-		result=[]byte("")
+		result = []byte("")
 	}
-	w.Write(result)	
+	w.Write(result)
 }
 
 func getAcId(acName string) int {
@@ -238,8 +240,8 @@ func getAcId(acName string) int {
 }
 
 //func (oauth *OAuth)getOpenId(clientId string, acid int) string {
-func getOpenId(res_id string,clientId string, acid int) string {
-	strSQL := fmt.Sprintf("select openid from openid_tab where res_id='%s' and client_id='%s' and acid=%d limit 1",res_id,clientId, acid)
+func getOpenId(res_id string, clientId string, acid int) string {
+	strSQL := fmt.Sprintf("select openid from openid_tab where res_id='%s' and client_id='%s' and acid=%d limit 1", res_id, clientId, acid)
 	//fmt.Println(strSQL)
 	mydb := common.GetDB()
 	if mydb == nil {
@@ -258,4 +260,14 @@ func getOpenId(res_id string,clientId string, acid int) string {
 		}
 		return openId
 	}
+}
+
+func (oauth *OAuth) getRes(w http.ResponseWriter, r *http.Request) {
+	resp := oauth.Server.NewResponse()
+	defer resp.Close()
+
+	if ir := oauth.Server.HandleInfoRequest(resp, r); ir != nil {
+		oauth.Server.FinishInfoRequest(resp, r, ir)
+	}
+	osin.OutputJSON(resp, w, r)
 }

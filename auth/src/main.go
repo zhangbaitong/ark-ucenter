@@ -2,10 +2,10 @@ package main
 
 import (
 	"action"
+	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
-	"fmt"
 	"time"
 )
 
@@ -36,6 +36,6 @@ func main() {
 	router.POST("/oauth2/register", register.Post)
 
 	fmt.Println("Server is start at ", time.Now().String(), " , on port 443")
-	log.Fatal(http.ListenAndServeTLS(":443", "./src/static/pem/servercert.pem", "./src/static/pem/serverkey.pem", router))
+	log.Fatal(http.ListenAndServeTLS(":443", "./static/pem/servercert.pem", "./static/pem/serverkey.pem", router))
 	//log.Fatal(http.ListenAndServe(":443",  router))
 }

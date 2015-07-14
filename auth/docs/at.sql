@@ -44,12 +44,13 @@ create table IF NOT EXISTS authorization_tab(
   PRIMARY KEY (`res_id`,`acid`)
 )ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='授权中心-授权关系表' ;
 
-create table IF NOT EXISTS authorization_tab(
+create table IF NOT EXISTS client_secret_tab(
   res_id  varchar(50) not null COMMENT '资源ID',
   app_id bigint(20) not null COMMENT '资源APP应用的id',
   app_key varchar(50) not null COMMENT '资源APP客户的id',
   PRIMARY KEY (`res_id`)
 )ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='授权中心-授权关系表' ;
+
 
 
 insert into resource_tab(res_id,res_name,owner_acid,operator_acid,status,create_time) values('000001','测试组件',1,1,1,UNIX_TIMESTAMP());
