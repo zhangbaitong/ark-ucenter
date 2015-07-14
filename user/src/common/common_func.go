@@ -127,3 +127,87 @@ func ReadFile(filePth string) string {
 
 	return string(bytes)
 }
+
+func HttpGet(strURL string)(strBody string,err error) {
+	resp, err := http.Get(strURL)
+	if err != nil {
+		// handle error
+		return "",err
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "",err
+	}
+
+	return string(body),nil
+}
+
+func HttpPost(strURL,strPostData string) (strBody string,err error) {
+	resp, err := http.Post(strURL,
+		"application/x-www-form-urlencoded", strings.NewReader(strPostData))
+	if err != nil {
+		fmt.Println(err)
+		return "",err
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "",err
+	}
+
+	return string(body),nil
+}
+
+func HttpPostForm(strURL string,uv url.Values) (strBody string,err error) {
+	resp, err := http.PostForm(strURL,uv)
+
+	if err != nil {
+		return "",err
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "",err
+	}
+
+	return string(body),nil
+}
+
+func Invoker(invoke_type int,invoke_dest string,invoke_data interface{})(strBody string,err error) {
+	switch invoke_type {
+	case HTTP_GET:
+		strBody,err=HttpGet(invoke_dest)
+	case HTTP_POST:
+		//fmt.Println(invoke_data.(type))
+		switch invoke_data.(type) {
+		case string:
+			strBody,err=HttpPost(invoke_dest,invoke_data.(string))
+		case url.Values:
+			strBody,err=HttpPostForm(invoke_dest,invoke_data.(url.Values))
+		}
+	case HTTPS_GET:
+		fmt.Println("HTTPS_GET")
+	case HTTPS_POST:
+		fmt.Println("HTTPS_GET")
+	default:
+		fmt.Println("is another type not handle yet")
+	}
+	return strBody,err
+}
+/*
+	strBody,err:=common.Invoker(common.HTTP_GET,"http://127.0.0.1:8090/hello/tomzhao","")
+	//strTemp := "request=test" 
+	//strBody,err:=common.Invoker(common.HTTP_POST,"http://127.0.0.1:8090/sysinfo",value)
+	//value:=url.Values{"user_name": {"tomzhao"}, "password": {"111111"}}
+	//strBody,err:=common.Invoker(common.HTTP_POST,"http://127.0.0.1:8090/sysinfo",value)
+	if err!=nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(strBody)
+	return 
+*/

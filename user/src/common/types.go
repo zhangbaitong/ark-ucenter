@@ -12,3 +12,11 @@ type RequestData struct {
 	Method  string
 	Params  string
 }
+
+const (
+    HTTP_GET = iota
+    HTTP_POST 
+    HTTPS_GET 
+    HTTPS_POST 
+    RPC 
+)
