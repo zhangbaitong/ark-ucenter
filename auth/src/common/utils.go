@@ -9,7 +9,7 @@ import (
 	"log"
 	"os"
 	"time"
-	)
+)
 
 //the global var of db connection,logger,redis pool.it will be create only once.
 var (
@@ -22,8 +22,8 @@ var (
 //Get db connection from mysql
 func GetDB() (db *sql.DB) {
 	if DBpool == nil {
-		//DBpool = CreateDbPool(20, "mysql", "root:111111@tcp(117.78.19.76:3306)/at_db",true)
-		DBpool = CreateDbPool(20, "mysql", "tomzhao:111111@tcp(127.0.0.1:3306)/at_db",true)
+		DBpool = CreateDbPool(5, "mysql", "root:111111@tcp(117.78.19.76:3306)/at_db", true)
+		//DBpool = CreateDbPool(20, "mysql", "tomzhao:111111@tcp(127.0.0.1:3306)/at_db", true)
 	}
 
 	conn, err := DBpool.GetConn()
@@ -32,7 +32,7 @@ func GetDB() (db *sql.DB) {
 		return nil
 	}
 
-	return conn	
+	return conn
 }
 
 func FreeDB(db *sql.DB) {
@@ -44,7 +44,7 @@ func GetDBInfo() (info string) {
 		return "DB not init\r\n"
 	}
 
-	return fmt.Sprintf("PoolSize=%d;MaxPoolSize=%d",DBpool.PoolSize,DBpool.MaxPoolSize)
+	return fmt.Sprintf("PoolSize=%d;MaxPoolSize=%d", DBpool.PoolSize, DBpool.MaxPoolSize)
 }
 
 //get uuid lik a227cedf-e806-11e4-8666-3c075419d855
@@ -68,8 +68,8 @@ func GetRedisPool() *redis.Pool {
 			MaxIdle:     3,
 			IdleTimeout: 240 * time.Second,
 			Dial: func() (redis.Conn, error) {
-				//c, err := redis.Dial("tcp", "117.78.19.76:6379")
-				c, err := redis.Dial("tcp", "127.0.0.1:6379")
+				c, err := redis.Dial("tcp", "117.78.19.76:6379")
+				//c, err := redis.Dial("tcp", "127.0.0.1:6379")
 				if err != nil {
 					return nil, err
 				}
@@ -87,4 +87,3 @@ func GetRedisPool() *redis.Pool {
 	}
 	return pool
 }
-

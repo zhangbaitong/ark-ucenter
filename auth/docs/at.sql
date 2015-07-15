@@ -3,8 +3,6 @@ create table IF NOT EXISTS resource_tab(
   res_name varchar(100) not null COMMENT '资源名称',
   owner_acid bigint(20) not null COMMENT '拥有者账号ID',
   operator_acid bigint(20) not null COMMENT '授权者',
-  interface_url varchar(1000) not null COMMENT '资源接口url',
-  interface_type integer not null  COMMENT '资源接口类型 1：http get；2：http post',
   status   integer not null COMMENT '资源状态 0:初始化；1：启用',
   create_time integer not null COMMENT '创建时间',
   PRIMARY KEY (`res_id`)
@@ -31,7 +29,6 @@ create table IF NOT EXISTS account_tab(
 create table IF NOT EXISTS openid_tab(
   res_id  varchar(50) not null COMMENT '资源ID',
   acid bigint(20) not null COMMENT '账号ID',
-  client_id   varchar(50) not null COMMENT '客户端ID',
   openid   varchar(50) not null COMMENT 'open id',
   PRIMARY KEY (`res_id`,`acid`)
 )ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='账号OpenID对应表' ;

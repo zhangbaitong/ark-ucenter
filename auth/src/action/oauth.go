@@ -10,6 +10,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/unrolled/render"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 )
 
@@ -49,20 +51,93 @@ func NewOAuth() *OAuth {
 
 func (oauth *OAuth) GetAuthorize(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Println("GetAuthorize:\r\n")
+	resp := oauth.Server.NewResponse()
+	defer resp.Close()
+
+	queryForm, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		resp.SetError("get http param error", "")
+		osin.OutputJSON(resp, w, r)
+		return
+	}
+	if !checkCodeRequest(resp, queryForm) {
+		osin.OutputJSON(resp, w, r)
+		return
+	}
+
 	acname := oauth.Logged(w, r)
 	if acname != "" {
 		//已经登录，则返回页面，出现 授权按钮+权限列表
 		oauth.View.HTML(w, http.StatusOK, "oauth", map[string]string{"AuthorizeDisplay": "block", "LoginDisplay": "none", "RequestURI": r.RequestURI})
-
 	} else {
 		//未登录，则返回页面，出现 用户名密码框+授权并登陆按钮+权限列表
 		oauth.View.HTML(w, http.StatusOK, "oauth", map[string]string{"AuthorizeDisplay": "none", "LoginDisplay": "block", "RequestURI": r.RequestURI})
 	}
-	//fmt.Println("GetAuthorize:\r\n")
+}
+
+//检查应用是否有权限访问其申请资源，以及资源是否已启用
+func checkCodeRequest(w *osin.Response, queryForm map[string][]string) bool {
+	//校验参数是否完整
+	if queryForm["open_id"] == nil {
+		w.SetError("param open_id can not be empty", "")
+		return false
+	}
+	if queryForm["scope"] == nil {
+		w.SetError("param scope can not be empty", "")
+		return false
+	}
+
+	//检查资源是否启用
+	resId := "AT"
+	status := GetResStatus(resId)
+	if status != 1 {
+		w.SetError("resource ["+resId+"] is not enable", "")
+		return false
+	}
+
+	//通过openId获取acId
+	openId := queryForm["open_id"][0]
+	if openId == "" {
+		w.SetError("open_id can not be empty", "")
+		return false
+	}
+	fmt.Println("openId", openId)
+
+	acId := GetAcIdByresIdAndopenId(openId)
+	if acId <= 0 {
+		w.SetError("can not find acid ", "")
+		return false
+	}
+
+	//通过资源ID和acId获取权限
+	priviliges := GetPriviliges(resId, acId)
+	if priviliges == "" {
+		w.SetError("no priviliges", "")
+		return false
+	}
+
+	//校验参数中的权限是否被运行访问
+	scopeArr := strings.Split(queryForm["scope"][0], ",")
+	if len(scopeArr) <= 0 {
+		w.SetError("no priviliges specified", "")
+		return false
+	}
+	for i := 0; i < len(scopeArr); i++ {
+		if !strings.Contains(priviliges, scopeArr[i]) {
+			w.SetError("the app has no access to priviliges ["+scopeArr[i]+"]", "")
+			return false
+		}
+	}
+
+	return true
 }
 
 func (oauth *OAuth) PostAuthorize(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Println("PostAuthorize:\r\n")
+
+	apiChoose := r.FormValue("getUsername")
+	fmt.Println("api_choose", apiChoose)
+
 	acname := oauth.Logged(w, r)
 	if acname == "" {
 		//使用提交的表单登陆
@@ -118,6 +193,7 @@ func (oauth *OAuth) Token(w http.ResponseWriter, r *http.Request, _ httprouter.P
 				ar.Authorized = true
 			}
 		}
+
 		oauth.Server.FinishAccessRequest(resp, r, ar)
 	}
 	osin.OutputJSON(resp, w, r)
@@ -262,12 +338,35 @@ func getOpenId(res_id string, clientId string, acid int) string {
 	}
 }
 
-func (oauth *OAuth) getRes(w http.ResponseWriter, r *http.Request) {
-	resp := oauth.Server.NewResponse()
-	defer resp.Close()
+func (oauth *OAuth) CheckPrivilige(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	fmt.Println("CheckPrivilige:\r\n")
 
-	if ir := oauth.Server.HandleInfoRequest(resp, r); ir != nil {
-		oauth.Server.FinishInfoRequest(resp, r, ir)
+	strToken := r.FormValue("token")
+	strPrivilige := r.FormValue("privilige")
+	if strToken == "" {
+		strBody := []byte("{\"Code\":1,\"Message\":\"token can not be empty \"}")
+		w.Write(strBody)
+		return
 	}
-	osin.OutputJSON(resp, w, r)
+	if strPrivilige == "" {
+		strBody := []byte("{\"Code\":1,\"Message\":\"privilige can not be empty \"}")
+		w.Write(strBody)
+		return
+	}
+
+	ret, err := oauth.Server.Storage.LoadAccess(strToken)
+	if err != nil {
+		strBody := []byte("{\"Code\":1,\"Message\":\"user token not exist \"}")
+		w.Write(strBody)
+		return
+	}
+
+	if !strings.Contains(ret.Scope, strPrivilige) {
+		strBody := []byte("{\"Code\":1,\"Message\":\"no privilige\"}")
+		w.Write(strBody)
+		return
+	} else {
+		strBody := []byte("{\"Code\":0,\"Message\":\"OK \"}")
+		w.Write(strBody)
+	}
 }

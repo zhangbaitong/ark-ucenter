@@ -34,6 +34,7 @@ func main() {
 	router.GET("/oauth2/logout", logout.Get)
 	router.POST("/oauth2/logout", logout.Get)
 	router.POST("/oauth2/register", register.Post)
+	router.POST("/oauth2/privilige", oauth.CheckPrivilige)
 
 	fmt.Println("Server is start at ", time.Now().String(), " , on port 443")
 	log.Fatal(http.ListenAndServeTLS(":443", "./static/pem/servercert.pem", "./static/pem/serverkey.pem", router))
