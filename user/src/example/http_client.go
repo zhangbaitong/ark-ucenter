@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 	"encoding/json"
+	"common"
 )
 
 type RequestData struct {
@@ -33,14 +34,15 @@ func httpPost() {
 	//var data map[string]string
 	//data["imageName"]="centos:latest"
 	//data["containerName"]="tomzhao"
-	//post_data := RequestData{Version: "1.0", Method: "/auth/register", Params: "{\"Ac_name\":\"tomzhao1111\",\"Ac_password\":\"111111\",\"Email\":\"gyzly@sina.com1111\",\"Mobile\":\"18585816541\"}"}
+	//post_data := RequestData{Version: "1.0", Method: "/auth/register", Params: "{\"user_name\":\"tomchen\",\"password\":\"111111\",\"Email\":\"tomchen@sina.com\",\"Mobile\":\"18585816511\"}"}
+	post_data := RequestData{Version: "1.0", Method: "/auth/register", Params: "{\"user_name\":\"tomzhao\",\"password\":\"111111\",\"Email\":\"gyzly@sina.com\",\"Mobile\":\"18585816541\"}"}
 	//post_data := RequestData{Version: "1.0", Method: "/auth/login", Params: "{\"user_name\":\"tomzhao\",\"password\":\"111111\"}"}
 	//post_data := RequestData{Version: "1.0", Method: "/auth/logout", Params: "{\"ac_name\":\"tomzhao\",\"ac_password\":\"111111\"}"}
 	//post_data := RequestData{Version: "1.0", Method: "/auth/getacid", Params: "{\"openid\":\"tomzhao\"}"}
-	post_data := RequestData{Version: "1.0", Method: "/auth/changepw", Params: "{\"ac_name\":\"tomzhao\",\"old_password\":\"333333\",\"new_password\":\"444444\"}"}
+	//post_data := RequestData{Version: "1.0", Method: "/auth/changepw", Params: "{\"ac_name\":\"tomzhao\",\"old_password\":\"333333\",\"new_password\":\"444444\"}"}
 	strPostData, _ := json.Marshal(post_data)
 	strTemp := "request=" + string(strPostData)
-	resp, err := http.Post("http://127.0.0.1:8080/auth/changepw",
+	resp, err := http.Post("http://127.0.0.1:8090/auth/register",
 		"application/x-www-form-urlencoded", strings.NewReader(strTemp))
 	//"application/json",strings.NewReader(strTemp))
 	if err != nil {
@@ -126,9 +128,17 @@ func toJSON(obj interface{}) string {
 }
 
 func main() {
+	value:=url.Values{"token": {"0rBIXKgoRnWv7XntfV0JCg"},"user_name": {"tomzhao"}}
+	strBody,err:=common.Invoker(common.HTTP_POST,"http://127.0.0.1:8090/auth/get_user_info",value)
+	if err!=nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(strBody)
+	return 
 
 /*
-*/
+
 	//strClient:="{\"Id\":\"1234\",\"Secret\":\"aabbccdd\",\"RedirectUri\":\"http://localhost:8080\",\"UserData\":\"\"}"
 	var client Client
 	client.Id="1234"
@@ -147,6 +157,7 @@ func main() {
 	//fmt.Println("strImage=", strImage)
 	//fmt.Println("strTag=", strTag)
 	//return
+*/	
 	//httpGet()
 	//httpPost()
 	//httpPostForm()
