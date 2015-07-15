@@ -549,14 +549,13 @@ func GetUserInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	fmt.Println("user_name=",user_name)
 	fmt.Println("token=",token)
 	
-	strCheckURL:="https://connect.funzhou.cn/oauth2/check_user"
+	strCheckURL:="https://connect.funzhou.cn/oauth2/privilige"
 	strClientID:="user_center"
 	strInterface:="get_user_info"
 
 	value := url.Values{}
-	value.Set("user_name",user_name)
 	value.Set("token",token)
-	value.Set("res_id",strClientID+strInterface)
+	value.Set("privilige",strInterface)
 	strBody,err:=common.Invoker(common.HTTP_POST,strCheckURL,value)
 	if err!=nil {
 		fmt.Println(err)
