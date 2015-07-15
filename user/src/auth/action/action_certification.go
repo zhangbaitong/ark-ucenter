@@ -550,7 +550,6 @@ func GetUserInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	fmt.Println("token=",token)
 	
 	strCheckURL:="https://connect.funzhou.cn/oauth2/privilige"
-	strClientID:="user_center"
 	strInterface:="get_user_info"
 
 	value := url.Values{}
