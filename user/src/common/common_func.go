@@ -194,7 +194,7 @@ func Invoker(invoke_type int,invoke_dest string,invoke_data interface{})(strBody
 	case HTTPS_GET:
 		fmt.Println("HTTPS_GET")
 	case HTTPS_POST:
-		fmt.Println("HTTPS_GET")
+		fmt.Println("HTTPS_POST")
 	default:
 		fmt.Println("is another type not handle yet")
 	}
