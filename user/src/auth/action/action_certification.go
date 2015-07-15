@@ -8,6 +8,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 	 "gopkg.in/mgo.v2/bson" 
 )
@@ -535,4 +536,72 @@ func ChangePassword(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	}
 */	
 
+}
+
+type AUResponse struct {
+	Code int
+	Message string
+}
+
+func GetUserInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	user_name := r.FormValue("user_name")
+	token := r.FormValue("token")
+	fmt.Println("user_name=",user_name)
+	fmt.Println("token=",token)
+	
+	strCheckURL:="https://connect.funzhou.cn/oauth2/check_user"
+	strClientID:="user_center"
+	strInterface:="get_user_info"
+
+	value := url.Values{}
+	value.Set("user_name",user_name)
+	value.Set("token",token)
+	value.Set("res_id",strClientID+strInterface)
+	strBody,err:=common.Invoker(common.HTTP_POST,strCheckURL,value)
+	if err!=nil {
+		fmt.Println(err)
+		strBody, _ := setParams("/auth/get_user_info", 1, "submit check  faild !", "")
+		w.Write(strBody)
+		return
+	}
+	fmt.Println(strBody);
+
+	var result AUResponse
+	err = json.Unmarshal([]byte(strBody), &result)
+	if err != nil {
+		strBody, _ := setParams("/auth/get_user_info", 1, "json data decode faild!", "")
+		w.Write(strBody)
+		return 
+	}
+
+	if  result.Code!=0 {
+		strBody, _ := setParams("/auth/get_user_info", 1, "user check faild beacuse of "+result.Message, "")
+		w.Write(strBody)
+		return
+	}
+
+	session := common.GetSession()
+	if(session==nil){
+		strBody, _ := setParams("/auth/get_user_info", 1, "get DB faild !!", "")
+		w.Write(strBody)
+		return 
+	}	
+	defer common.FreeSession(session)
+
+	user_info := Account{}
+	coll := session.DB("at_db").C("user_tab")
+
+	condition_or:=bson.M{"$or": []bson.M{bson.M{"user_name":user_name},bson.M{"email":user_name},bson.M{"mobile":user_name}}}
+	coll.Find(condition_or).Sort(user_name).One(&user_info)
+
+	strResult, err := json.Marshal(user_info)
+	if err != nil {
+		strBody, _ := setParams("/auth/get_user_info", 1, "json data encode faild!", "")
+		w.Write(strBody)
+		return 
+	}
+
+	strResult, _ = setParams("/auth/get_user_info", 0, "ok", string(strResult))
+	w.Write(strResult)
+	return		
 }
