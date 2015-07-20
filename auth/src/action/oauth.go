@@ -142,11 +142,9 @@ func (oauth *OAuth) PostAuthorize(w http.ResponseWriter, r *http.Request, _ http
 	fmt.Println("api_choose", apiChoose)
 
 	acname := oauth.Logged(w, r)
-	fmt.Println("acname=",acname)
 	if acname == "" {
 		//使用提交的表单登陆
 		acname, _ = oauth.Login(w, r)
-		fmt.Println("11acname=",acname)
 		//登陆失败
 		if acname == "" {
 			//返回页面，出现 登陆失败提示，用户名密码框+授权并登陆按钮+权限列表
@@ -234,7 +232,6 @@ func (oauth *OAuth) Login(w http.ResponseWriter, req *http.Request) (string, err
 //登录插入
 func (oauth *OAuth) LoginQuery(user *User) bool {
 	strSQL := fmt.Sprintf("select count(ac_name) from account_tab where ac_name='%s' and ac_password='%s'", user.Acname,user.Password)
-		fmt.Println(strSQL)
 	rows, err := common.GetDB().Query(strSQL)
 	if err != nil {
 		return false
