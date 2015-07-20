@@ -121,6 +121,6 @@ func (old *AccessData) transfer() *osin.AccessData {
 }
 
 type ATUserData struct {
-		Acname   string
-		Acid   int
+		Ac_name   string
+		Ac_id   int
 }	

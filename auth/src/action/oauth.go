@@ -161,13 +161,11 @@ func (oauth *OAuth) PostAuthorize(w http.ResponseWriter, r *http.Request, _ http
 		//发放code 或token ,附加到redirect_uri后，并跳转
 		//存储acname，acid,rsid,clientid,clientSecret等必要信息
 		//ar.UserData = struct{ Acname string }{Acname: acname}
-		fmt.Println("Write Authorize Begin:")
 		acid:=getAcId(acname)
-		ar.UserData = ATUserData{Acname:acname,Acid:acid}
+		ar.UserData = ATUserData{Ac_name:acname,Ac_id:acid}
 		ar.Authorized = true
 
 		oauth.Server.FinishAuthorizeRequest(resp, r, ar)
-		fmt.Println("Write Authorize End:")
 	}
 	osin.OutputJSON(resp, w, r)
 }
