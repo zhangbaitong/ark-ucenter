@@ -44,7 +44,7 @@ create table IF NOT EXISTS app_confered_tab(
 
 create table IF NOT EXISTS app_confered_person_tab(
   app_id bigint(20) not null COMMENT '应用ID',
-  openid bigint(20) not null COMMENT '账号ID',
+  openid varchar(50) not null COMMENT '账号ID',
   res_id bigint(20) not null COMMENT '权限ID',
   status   integer not null COMMENT '状态0:启用;1:停用;',
   create_time   integer not null,
