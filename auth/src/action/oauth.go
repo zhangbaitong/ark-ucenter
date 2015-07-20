@@ -78,10 +78,13 @@ func (oauth *OAuth) GetAuthorize(w http.ResponseWriter, r *http.Request, _ httpr
 //检查应用是否有权限访问其申请资源，以及资源是否已启用
 func checkCodeRequest(w *osin.Response, queryForm map[string][]string) bool {
 	//校验参数是否完整
+	return true
+	
 	if queryForm["open_id"] == nil {
 		w.SetError("param open_id can not be empty", "")
 		return false
 	}
+	
 	if queryForm["scope"] == nil {
 		w.SetError("param scope can not be empty", "")
 		return false
@@ -139,9 +142,11 @@ func (oauth *OAuth) PostAuthorize(w http.ResponseWriter, r *http.Request, _ http
 	fmt.Println("api_choose", apiChoose)
 
 	acname := oauth.Logged(w, r)
+	fmt.Println("acname=",acname)
 	if acname == "" {
 		//使用提交的表单登陆
 		acname, _ = oauth.Login(w, r)
+		fmt.Println("11acname=",acname)
 		//登陆失败
 		if acname == "" {
 			//返回页面，出现 登陆失败提示，用户名密码框+授权并登陆按钮+权限列表
@@ -158,10 +163,13 @@ func (oauth *OAuth) PostAuthorize(w http.ResponseWriter, r *http.Request, _ http
 		//发放code 或token ,附加到redirect_uri后，并跳转
 		//存储acname，acid,rsid,clientid,clientSecret等必要信息
 		//ar.UserData = struct{ Acname string }{Acname: acname}
-		ar.UserData = struct{ Acname string }{Acname: acname}
+		fmt.Println("Write Authorize Begin:")
+		acid:=getAcId(acname)
+		ar.UserData = ATUserData{Acname:acname,Acid:acid}
 		ar.Authorized = true
+
 		oauth.Server.FinishAuthorizeRequest(resp, r, ar)
-		//fmt.Println("Write Authorize End:\r\n")
+		fmt.Println("Write Authorize End:")
 	}
 	osin.OutputJSON(resp, w, r)
 }
@@ -208,7 +216,6 @@ func (oauth *OAuth) Logged(w http.ResponseWriter, req *http.Request) string {
 }
 
 func (oauth *OAuth) Login(w http.ResponseWriter, req *http.Request) (string, error) {
-	fmt.Println("Login:\r\n")
 	acname := req.FormValue("acname")
 	password := req.FormValue("password")
 	if acname == "" || password == "" {
@@ -226,17 +233,17 @@ func (oauth *OAuth) Login(w http.ResponseWriter, req *http.Request) (string, err
 
 //登录插入
 func (oauth *OAuth) LoginQuery(user *User) bool {
-	strSQL := fmt.Sprintf("select count(ac_name) from account_tab where (ac_name='%s' or email='%s' or mobile='%s') and ac_password='%s'", user.Acname, user.Acname, user.Acname, user.Password)
+	strSQL := fmt.Sprintf("select count(ac_name) from account_tab where ac_name='%s' and ac_password='%s'", user.Acname,user.Password)
+		fmt.Println(strSQL)
 	rows, err := common.GetDB().Query(strSQL)
-	defer rows.Close()
 	if err != nil {
 		return false
 	} else {
+		defer rows.Close()
 		var nCount int
 		for rows.Next() {
 			rows.Scan(&nCount)
 		}
-
 		if nCount == 0 {
 			return false
 		}
@@ -294,7 +301,7 @@ func (oauth *OAuth) Get(w http.ResponseWriter, req *http.Request, ps httprouter.
 }
 
 func getAcId(acName string) int {
-	strSQL := fmt.Sprintf("select acid from account_tab where ac_name='%s' limit 1", acName)
+	strSQL := fmt.Sprintf("select ac_id from account_tab where ac_name='%s' limit 1", acName)
 	mydb := common.GetDB()
 	if mydb == nil {
 		fmt.Println("get db connection error")
@@ -355,12 +362,15 @@ func (oauth *OAuth) CheckPrivilige(w http.ResponseWriter, r *http.Request, _ htt
 	}
 
 	ret, err := oauth.Server.Storage.LoadAccess(strToken)
+	fmt.Println(err)
 	if err != nil {
 		strBody := []byte("{\"Code\":1,\"Message\":\"user token not exist \"}")
 		w.Write(strBody)
 		return
 	}
 
+	fmt.Println("ret.Scope=",ret.Scope)
+	fmt.Println("strPrivilige=",strPrivilige)
 	if !strings.Contains(ret.Scope, strPrivilige) {
 		strBody := []byte("{\"Code\":1,\"Message\":\"no privilige\"}")
 		w.Write(strBody)

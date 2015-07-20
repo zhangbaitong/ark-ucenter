@@ -119,3 +119,8 @@ func (old *AccessData) transfer() *osin.AccessData {
 	accessData.UserData = old.UserData
 	return &accessData
 }
+
+type ATUserData struct {
+		Acname   string
+		Acid   int
+}	
