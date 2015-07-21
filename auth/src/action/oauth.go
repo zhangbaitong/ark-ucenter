@@ -9,8 +9,8 @@ import (
 	"github.com/dchest/authcookie"
 	"github.com/julienschmidt/httprouter"
 	"github.com/unrolled/render"
+	"html/template"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 )
@@ -54,92 +54,18 @@ func (oauth *OAuth) GetAuthorize(w http.ResponseWriter, r *http.Request, _ httpr
 	resp := oauth.Server.NewResponse()
 	defer resp.Close()
 
-	queryForm, err := url.ParseQuery(r.URL.RawQuery)
-	if err != nil {
-		resp.SetError("get http param error", "")
-		osin.OutputJSON(resp, w, r)
-		return
-	}
-	if !checkCodeRequest(resp, queryForm) {
-		osin.OutputJSON(resp, w, r)
-		return
-	}
-
 	acname := oauth.Logged(w, r)
 	if acname != "" {
 		//已经登录，则返回页面，出现 授权按钮+权限列表
-		oauth.View.HTML(w, http.StatusOK, "oauth", map[string]string{"AuthorizeDisplay": "block", "LoginDisplay": "none", "RequestURI": r.RequestURI})
+		oauth.View.HTML(w, http.StatusOK, "oauth", map[string]string{"AuthorizeDisplay": "block", "LoginDisplay": "none", "RequestURI": r.RequestURI, "test": HTML("<b>World</b>")})
 	} else {
 		//未登录，则返回页面，出现 用户名密码框+授权并登陆按钮+权限列表
-		oauth.View.HTML(w, http.StatusOK, "oauth", map[string]string{"AuthorizeDisplay": "none", "LoginDisplay": "block", "RequestURI": r.RequestURI})
+		oauth.View.HTML(w, http.StatusOK, "oauth", map[string]string{"AuthorizeDisplay": "none", "LoginDisplay": "block", "RequestURI": r.RequestURI, "test": HTML("<b>World</b>")})
 	}
-}
-
-//检查应用是否有权限访问其申请资源，以及资源是否已启用
-func checkCodeRequest(w *osin.Response, queryForm map[string][]string) bool {
-	//校验参数是否完整
-	return true
-	
-	if queryForm["open_id"] == nil {
-		w.SetError("param open_id can not be empty", "")
-		return false
-	}
-	
-	if queryForm["scope"] == nil {
-		w.SetError("param scope can not be empty", "")
-		return false
-	}
-
-	//检查资源是否启用
-	resId := "AT"
-	status := GetResStatus(resId)
-	if status != 1 {
-		w.SetError("resource ["+resId+"] is not enable", "")
-		return false
-	}
-
-	//通过openId获取acId
-	openId := queryForm["open_id"][0]
-	if openId == "" {
-		w.SetError("open_id can not be empty", "")
-		return false
-	}
-	fmt.Println("openId", openId)
-
-	acId := GetAcIdByresIdAndopenId(openId)
-	if acId <= 0 {
-		w.SetError("can not find acid ", "")
-		return false
-	}
-
-	//通过资源ID和acId获取权限
-	priviliges := GetPriviliges(resId, acId)
-	if priviliges == "" {
-		w.SetError("no priviliges", "")
-		return false
-	}
-
-	//校验参数中的权限是否被运行访问
-	scopeArr := strings.Split(queryForm["scope"][0], ",")
-	if len(scopeArr) <= 0 {
-		w.SetError("no priviliges specified", "")
-		return false
-	}
-	for i := 0; i < len(scopeArr); i++ {
-		if !strings.Contains(priviliges, scopeArr[i]) {
-			w.SetError("the app has no access to priviliges ["+scopeArr[i]+"]", "")
-			return false
-		}
-	}
-
-	return true
 }
 
 func (oauth *OAuth) PostAuthorize(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Println("PostAuthorize:\r\n")
-
-	apiChoose := r.FormValue("getUsername")
-	fmt.Println("api_choose", apiChoose)
 
 	acname := oauth.Logged(w, r)
 	if acname == "" {
@@ -161,8 +87,8 @@ func (oauth *OAuth) PostAuthorize(w http.ResponseWriter, r *http.Request, _ http
 		//发放code 或token ,附加到redirect_uri后，并跳转
 		//存储acname，acid,rsid,clientid,clientSecret等必要信息
 		//ar.UserData = struct{ Acname string }{Acname: acname}
-		acid:=getAcId(acname)
-		ar.UserData = ATUserData{Ac_name:acname,Ac_id:acid}
+		acid := GetAcId(acname)
+		ar.UserData = ATUserData{Ac_name: acname, Ac_id: acid}
 		ar.Authorized = true
 
 		oauth.Server.FinishAuthorizeRequest(resp, r, ar)
@@ -176,31 +102,62 @@ func (oauth *OAuth) Token(w http.ResponseWriter, r *http.Request, _ httprouter.P
 	defer resp.Close()
 
 	if ar := oauth.Server.HandleAccessRequest(resp, r); ar != nil {
-		switch ar.Type {
-		case osin.AUTHORIZATION_CODE:
-			ar.Authorized = true
-		case osin.REFRESH_TOKEN:
-			ar.Authorized = true
-		case osin.PASSWORD:
-			user := User{Acname: ar.Username, Password: ar.Password}
-			ok := oauth.LoginQuery(&user)
-			if ok {
-				oauth.GenerateCookie(w, r, user.Acname, 1)
-				ar.Authorized = true
-			} else {
-				//通过redirect_uri 返回错误约定 并跳转到改redirect_uri
-			}
-		case osin.CLIENT_CREDENTIALS:
-			ar.Authorized = true
-		case osin.ASSERTION:
-			if ar.AssertionType == "urn:osin.example.complete" && ar.Assertion == "osin.data" {
-				ar.Authorized = true
-			}
-		}
-
+		checkAccessRequest(oauth, w, r, ar)
 		oauth.Server.FinishAccessRequest(resp, r, ar)
 	}
 	osin.OutputJSON(resp, w, r)
+}
+
+//检查应用是否有权限访问其申请资源，以及资源是否已启用
+func checkAccessRequest(oauth *OAuth, w http.ResponseWriter, r *http.Request, ar *osin.AccessRequest) *osin.AccessRequest {
+	switch ar.Type {
+	case osin.AUTHORIZATION_CODE:
+		ar.Authorized = true
+
+		//校验申请的资源是否已经给第三方应用授权
+		resources := ""
+		arrScope := strings.Split(ar.Scope, ",")
+		for i := 0; i < len(arrScope); i++ {
+			resId := GetResId(arrScope[i])
+			if IsAppConfered(ar.Client.GetId(), resId) {
+				if i == 0 {
+					resources += arrScope[i]
+				} else {
+					resources += "," + arrScope[i]
+				}
+
+				//写入用户授权表
+				userData := ar.UserData.(map[string]interface{})
+				acId := int(userData["Ac_id"].(float64))
+				openId := GetOpenId(acId, ar.Client.GetId())
+				if !IsPersonConfered(ar.Client.GetId(), openId, resId) {
+					InsertPersonConfered(ar.Client.GetId(), openId, resId)
+				}
+			}
+		}
+
+		//重新给token绑定资源
+		ar.Scope = resources
+	case osin.REFRESH_TOKEN:
+		ar.Authorized = true
+	case osin.PASSWORD:
+		user := User{Acname: ar.Username, Password: ar.Password}
+		ok := oauth.LoginQuery(&user)
+		if ok {
+			oauth.GenerateCookie(w, r, user.Acname, 1)
+			ar.Authorized = true
+		} else {
+			//通过redirect_uri 返回错误约定 并跳转到改redirect_uri
+		}
+	case osin.CLIENT_CREDENTIALS:
+		ar.Authorized = true
+	case osin.ASSERTION:
+		if ar.AssertionType == "urn:osin.example.complete" && ar.Assertion == "osin.data" {
+			ar.Authorized = true
+		}
+	}
+
+	return ar
 }
 
 func (oauth *OAuth) Logged(w http.ResponseWriter, req *http.Request) string {
@@ -229,7 +186,7 @@ func (oauth *OAuth) Login(w http.ResponseWriter, req *http.Request) (string, err
 
 //登录插入
 func (oauth *OAuth) LoginQuery(user *User) bool {
-	strSQL := fmt.Sprintf("select count(ac_name) from account_tab where ac_name='%s' and ac_password='%s'", user.Acname,user.Password)
+	strSQL := fmt.Sprintf("select count(ac_name) from account_tab where ac_name='%s' and ac_password='%s'", user.Acname, user.Password)
 	rows, err := common.GetDB().Query(strSQL)
 	if err != nil {
 		return false
@@ -274,7 +231,7 @@ func (oauth *OAuth) Get(w http.ResponseWriter, req *http.Request, ps httprouter.
 	fmt.Println(accessData)
 	UserData := accessData.UserData.(map[string]interface{})
 	user_name := UserData["Acname"].(string)
-	acid := getAcId(user_name)
+	acid := GetAcId(user_name)
 	if accessData.Client == nil {
 		fmt.Println("Get Client Faild!!!")
 	}
@@ -293,28 +250,6 @@ func (oauth *OAuth) Get(w http.ResponseWriter, req *http.Request, ps httprouter.
 		result = []byte("")
 	}
 	w.Write(result)
-}
-
-func getAcId(acName string) int {
-	strSQL := fmt.Sprintf("select ac_id from account_tab where ac_name='%s' limit 1", acName)
-	mydb := common.GetDB()
-	if mydb == nil {
-		fmt.Println("get db connection error")
-		return -1
-	}
-	defer common.FreeDB(mydb)
-	rows, err := mydb.Query(strSQL)
-	if err != nil {
-		return -1
-	} else {
-		defer rows.Close()
-		var acid int
-		for rows.Next() {
-			rows.Scan(&acid)
-		}
-		return acid
-	}
-	return -1
 }
 
 //func (oauth *OAuth)getOpenId(clientId string, acid int) string {
@@ -364,8 +299,8 @@ func (oauth *OAuth) CheckPrivilige(w http.ResponseWriter, r *http.Request, _ htt
 		return
 	}
 
-	fmt.Println("ret.Scope=",ret.Scope)
-	fmt.Println("strPrivilige=",strPrivilige)
+	fmt.Println("ret.Scope=", ret.Scope)
+	fmt.Println("strPrivilige=", strPrivilige)
 	if !strings.Contains(ret.Scope, strPrivilige) {
 		strBody := []byte("{\"Code\":1,\"Message\":\"no privilige\"}")
 		w.Write(strBody)

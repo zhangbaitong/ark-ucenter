@@ -10,7 +10,7 @@ create table IF NOT EXISTS account_tab(
 )ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='认证中心-账号表'  AUTO_INCREMENT=1;
 
 create table IF NOT EXISTS app_info_tab(
-  app_id bigint(20) not null AUTO_INCREMENT COMMENT '应用ID',
+  app_id varchar(50) not null  COMMENT '应用ID',
   app_key varchar(100) not null COMMENT '应用密钥',
   app_name varchar(100) not null COMMENT '应用名称',
   app_desc varchar(256) not null COMMENT '应用描述',
@@ -22,7 +22,7 @@ create table IF NOT EXISTS app_info_tab(
 
 create table IF NOT EXISTS resource_tab(
   res_id bigint(20) not null AUTO_INCREMENT COMMENT '权限ID',
-  app_id bigint(20) not null  COMMENT '应用ID',
+  app_id varchar(50) not null  COMMENT '应用ID',
   res_name  varchar(50) not null COMMENT '资源名称',
   res_cname  varchar(50) not null COMMENT '资源中文名称',
   res_type int(1) not null COMMENT '调用类型 0:http get;1:http post;2:https get;3:https post',
@@ -35,7 +35,7 @@ create table IF NOT EXISTS resource_tab(
 
 
 create table IF NOT EXISTS app_confered_tab(
-  app_id bigint(20) not null COMMENT '应用ID',
+  app_id varchar(50) not null COMMENT '应用ID',
   res_id bigint(20) not null COMMENT '权限ID',
   status   integer not null COMMENT '状态0:启用;1:停用;',
   create_time   integer not null,
@@ -43,7 +43,7 @@ create table IF NOT EXISTS app_confered_tab(
 )ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='应用授权结果表';
 
 create table IF NOT EXISTS app_confered_person_tab(
-  app_id bigint(20) not null COMMENT '应用ID',
+  app_id varchar(50) not null COMMENT '应用ID',
   openid varchar(50) not null COMMENT '账号ID',
   res_id bigint(20) not null COMMENT '权限ID',
   status   integer not null COMMENT '状态0:启用;1:停用;',
@@ -53,7 +53,7 @@ create table IF NOT EXISTS app_confered_person_tab(
 
 create table IF NOT EXISTS openid_tab(
   ac_id bigint(20) not null COMMENT '账号ID',
-  app_id bigint(20) not null COMMENT '应用ID',
+  app_id varchar(50) not null COMMENT '应用ID',
   openid   varchar(50) not null COMMENT 'open id',
   PRIMARY KEY (`app_id`,`ac_id`)
 )ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='账号open_id对应表' ;
