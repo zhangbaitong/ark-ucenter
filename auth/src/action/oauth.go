@@ -9,7 +9,7 @@ import (
 	"github.com/dchest/authcookie"
 	"github.com/julienschmidt/httprouter"
 	"github.com/unrolled/render"
-	"html/template"
+	_"html/template"
 	"net/http"
 	"strings"
 	"time"
@@ -57,10 +57,10 @@ func (oauth *OAuth) GetAuthorize(w http.ResponseWriter, r *http.Request, _ httpr
 	acname := oauth.Logged(w, r)
 	if acname != "" {
 		//已经登录，则返回页面，出现 授权按钮+权限列表
-		oauth.View.HTML(w, http.StatusOK, "oauth", map[string]string{"AuthorizeDisplay": "block", "LoginDisplay": "none", "RequestURI": r.RequestURI, "test": HTML("<b>World</b>")})
+		oauth.View.HTML(w, http.StatusOK, "oauth", map[string]string{"AuthorizeDisplay": "block", "LoginDisplay": "none", "RequestURI": r.RequestURI})
 	} else {
 		//未登录，则返回页面，出现 用户名密码框+授权并登陆按钮+权限列表
-		oauth.View.HTML(w, http.StatusOK, "oauth", map[string]string{"AuthorizeDisplay": "none", "LoginDisplay": "block", "RequestURI": r.RequestURI, "test": HTML("<b>World</b>")})
+		oauth.View.HTML(w, http.StatusOK, "oauth", map[string]string{"AuthorizeDisplay": "none", "LoginDisplay": "block", "RequestURI": r.RequestURI})
 	}
 }
 
@@ -241,7 +241,7 @@ func (oauth *OAuth) Get(w http.ResponseWriter, req *http.Request, ps httprouter.
 	jr := make(map[string]interface{})
 	jr["client_id"] = client_id
 	if acid != -1 && client_id != "" {
-		openId := getOpenId("000001", client_id, acid)
+		openId := GetOpenId(acid,client_id)
 		jr["openid"] = openId
 	}
 
@@ -250,29 +250,6 @@ func (oauth *OAuth) Get(w http.ResponseWriter, req *http.Request, ps httprouter.
 		result = []byte("")
 	}
 	w.Write(result)
-}
-
-//func (oauth *OAuth)getOpenId(clientId string, acid int) string {
-func getOpenId(res_id string, clientId string, acid int) string {
-	strSQL := fmt.Sprintf("select openid from openid_tab where res_id='%s' and client_id='%s' and acid=%d limit 1", res_id, clientId, acid)
-	//fmt.Println(strSQL)
-	mydb := common.GetDB()
-	if mydb == nil {
-		fmt.Println("get db connection error")
-		return ""
-	}
-	defer common.FreeDB(mydb)
-	rows, err := mydb.Query(strSQL)
-	if err != nil {
-		return ""
-	} else {
-		defer rows.Close()
-		var openId string
-		for rows.Next() {
-			rows.Scan(&openId)
-		}
-		return openId
-	}
 }
 
 func (oauth *OAuth) CheckPrivilige(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
