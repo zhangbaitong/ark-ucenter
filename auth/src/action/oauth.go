@@ -74,24 +74,25 @@ func (oauth *OAuth) GetAuthorize(w http.ResponseWriter, r *http.Request, _ httpr
 	if !checkLogin(oauth, w, r) {
 		return
 	}
-	if !checkAuthorize(oauth, w, r) {
+	if !checkAuthorize(oauth, w, r, "") {
 		return
 	}
 	doAuthorizeRequest(oauth, w, r)
 }
 
 func (oauth *OAuth) PostLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	if !login(oauth, w, r) {
+	acname := login(oauth, w, r)
+	if acname == "" {
 		return
 	}
-	if !checkAuthorize(oauth, w, r) {
+	if !checkAuthorize(oauth, w, r, acname) {
 		return
 	}
 	doAuthorizeRequest(oauth, w, r)
 }
 
 //登录
-func login(oauth *OAuth, w http.ResponseWriter, r *http.Request) bool {
+func login(oauth *OAuth, w http.ResponseWriter, r *http.Request) string {
 	fmt.Println("Login\r\n")
 	acname := oauth.Logged(w, r)
 	if acname == "" {
@@ -101,10 +102,9 @@ func login(oauth *OAuth, w http.ResponseWriter, r *http.Request) bool {
 		if acname == "" {
 			//返回页面，出现 登陆失败提示，用户名密码框+授权并登陆按钮+权限列表
 			common.ForwardPage(w, "./static/public/oauth2/login.html", map[string]string{"RequestURI": r.RequestURI})
-			return false
 		}
 	}
-	return true
+	return acname
 }
 
 //检查是否登录，未登录，则返回登录页
@@ -118,16 +118,20 @@ func checkLogin(oauth *OAuth, w http.ResponseWriter, r *http.Request) bool {
 }
 
 //检查申请资源是否被授权，如有有未授权的资源，则返回授权页
-func checkAuthorize(oauth *OAuth, w http.ResponseWriter, r *http.Request) bool {
+func checkAuthorize(oauth *OAuth, w http.ResponseWriter, r *http.Request, acname string) bool {
 	sliceRes := []Res{}
 	strRes := ""
 	queryForm := common.GetUrlParam(r)
 	arrScope := strings.Split(queryForm["scope"][0], ",")
 	clientId := queryForm["client_id"][0]
-	acname := oauth.Logged(w, r)
+	if acname == "" {
+		acname = oauth.Logged(w, r)
+	}
 	openId := GetOpenIdByacName(acname, clientId)
+
 	for i := 0; i < len(arrScope); i++ {
 		resId := GetResId(arrScope[i])
+		fmt.Println("resId", arrScope)
 		if resId > 0 {
 			if !IsPersonConfered(clientId, openId, resId) {
 				resCname := GetResCname(arrScope[i])
@@ -143,8 +147,6 @@ func checkAuthorize(oauth *OAuth, w http.ResponseWriter, r *http.Request) bool {
 		}
 	}
 
-	fmt.Println("sliceRes", sliceRes)
-	fmt.Println("strRes", strRes)
 	if len(sliceRes) > 0 {
 		requestURI := "/oauth2/authorize?response_type=" + queryForm["response_type"][0] + "&client_id=" + queryForm["client_id"][0] + "&redirect_uri=" + queryForm["redirect_uri"][0] + "&state=" + queryForm["state"][0]
 		common.ForwardPage(w, "./static/public/oauth2/oauth.html", map[string]interface{}{"RequestURI": requestURI, "sliceRes": sliceRes, "strRes": strRes})
