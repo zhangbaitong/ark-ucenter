@@ -5,6 +5,7 @@ create table IF NOT EXISTS account_tab(
   ac_name varchar(100) not null COMMENT '账户名称',
   ac_password varchar(50) not null COMMENT '账户密码',
   status   integer not null COMMENT '账户状态0:启用;1:停用;',
+  source   integer not null DEFAULT 0 COMMENT '账户来源0:直接注册;1:QQ;',
   create_time   integer not null,
   PRIMARY KEY (`ac_id`)
 )ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='认证中心-账号表'  AUTO_INCREMENT=1;
