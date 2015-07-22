@@ -3,9 +3,11 @@ package common
 import (
 	"fmt"
 	"github.com/robfig/config"
+	"html/template"
 	"io/ioutil"
+	"net/http"
+	"net/url"
 	"os"
-	//"gopkg.in/mgo.v2-unstable"
 )
 
 func DisplayJson(obj_json map[string]interface{}) {
@@ -39,7 +41,6 @@ const (
 	FAILT       int    = 1
 	SUCCESS_MSG string = "ok"
 )
-
 
 func SaveFile(strFileName string, strData string) (ok bool) {
 	f, err := os.Create(strFileName)
@@ -126,4 +127,28 @@ func ReadFile(filePth string) string {
 	}
 
 	return string(bytes)
+}
+
+//重定向到页面
+func ForwardPage(w http.ResponseWriter, pageName string, data interface{}) {
+	t, err := template.ParseFiles(pageName)
+	if err != nil {
+		fmt.Println("ForwardPage error ", err.Error())
+		return
+	}
+	err = t.Execute(w, data)
+	if err != nil {
+		fmt.Println("ForwardPage error ", err.Error())
+		return
+	}
+}
+
+//获取http URL参数
+func GetUrlParam(r *http.Request) map[string][]string {
+	queryForm, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		fmt.Println("url ParseQuery error ", err.Error())
+		return nil
+	}
+	return queryForm
 }

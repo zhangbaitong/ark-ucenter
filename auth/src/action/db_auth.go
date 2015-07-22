@@ -48,6 +48,27 @@ func GetResId(res_name string) (res_id int) {
 	}
 }
 
+//通过app_id和res_name查询res_id
+func GetResCname(res_name string) (res_cname string) {
+	mydb := common.GetDB()
+	if mydb == nil {
+		fmt.Println("get db connection error")
+		return ""
+	}
+	defer common.FreeDB(mydb)
+
+	sqlStr := "select res_cname from resource_tab where res_name=?"
+	rows, err := mydb.Query(sqlStr, res_name)
+	if err != nil {
+		fmt.Println("query res_id failure", err)
+		return ""
+	} else {
+		rows.Next()
+		rows.Scan(&res_cname)
+		return res_cname
+	}
+}
+
 //判断资源是否被授予给指定应用的指定用户
 func IsPersonConfered(app_id string, openid string, res_id int) bool {
 	mydb := common.GetDB()
@@ -61,6 +82,7 @@ func IsPersonConfered(app_id string, openid string, res_id int) bool {
 	rows, err := mydb.Query(sqlStr, app_id, openid, res_id)
 	if err != nil {
 		fmt.Println("query IsPersonConfered failure", err)
+		return false
 	} else {
 		num := 0
 		rows.Next()
@@ -149,4 +171,10 @@ func GetAcId(acName string) int {
 		return acid
 	}
 	return -1
+}
+
+//通过用户名和应用名称获取openId
+func GetOpenIdByacName(acName string, appId string) string {
+	acId := GetAcId(acName)
+	return GetOpenId(acId, appId)
 }

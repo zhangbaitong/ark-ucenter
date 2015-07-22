@@ -1,4 +1,4 @@
-﻿
+
 function gologin(){
 	 document.getElementById("register").style.cssText = "display: none;";
 	 document.getElementById("forgetpwd").style.cssText = "display: none;";
@@ -195,4 +195,23 @@ function keyupP() {
     } else {
         document.getElementById("pwd_tips").style.cssText = "display: none;";
     }
+}
+
+//授权
+function authorize(){
+
+     var scope=$('input[name="authorizedRes"]').val();
+     $('input[name="api_choose"]:checked').each(function(){
+       	if(scope==""){
+		    scope+=$(this).val();
+		} else{
+			scope+=","+$(this).val();
+		}
+     });
+
+	 var authorizeUrl=$('input[name="authorizeUrl"]').val();
+	 authorizeUrl+="&scope="+scope;
+
+     $("#authorizeform").attr("action",authorizeUrl);
+     $("#authorizeform").submit();   
 }
