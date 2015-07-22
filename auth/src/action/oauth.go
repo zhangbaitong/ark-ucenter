@@ -53,21 +53,6 @@ func NewOAuth() *OAuth {
 	return &oauth
 }
 
-//func (oauth *OAuth) GetAuthorize(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-//	fmt.Println("GetAuthorize:\r\n")
-//	resp := oauth.Server.NewResponse()
-//	defer resp.Close()
-
-//	acname := oauth.Logged(w, r)
-//	if acname != "" {
-//		//已经登录，则返回页面，出现 授权按钮+权限列表
-//		oauth.View.HTML(w, http.StatusOK, "oauth", map[string]string{"AuthorizeDisplay": "block", "LoginDisplay": "none", "RequestURI": r.RequestURI})
-//	} else {
-//		//未登录，则返回页面，出现 用户名密码框+授权并登陆按钮+权限列表
-//		oauth.View.HTML(w, http.StatusOK, "oauth", map[string]string{"AuthorizeDisplay": "none", "LoginDisplay": "block", "RequestURI": r.RequestURI})
-//	}
-//}
-
 //申请获取授权码
 func (oauth *OAuth) GetAuthorize(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Println("GetAuthorize:\r\n")
@@ -164,7 +149,6 @@ func doAuthorizeRequest(oauth *OAuth, w http.ResponseWriter, r *http.Request) {
 	if ar != nil {
 		//发放code 或token ,附加到redirect_uri后，并跳转
 		//存储acname，acid,rsid,clientid,clientSecret等必要信息
-		//ar.UserData = struct{ Acname string }{Acname: acname}
 		acname := oauth.Logged(w, r)
 		acid := GetAcId(acname)
 		ar.UserData = ATUserData{Ac_name: acname, Ac_id: acid}
@@ -179,37 +163,6 @@ func (oauth *OAuth) PostAuthorize(w http.ResponseWriter, r *http.Request, _ http
 	doAuthorizeRequest(oauth, w, r)
 }
 
-//func (oauth *OAuth) PostAuthorize(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-//	fmt.Println("PostAuthorize:\r\n")
-
-//	acname := oauth.Logged(w, r)
-//	if acname == "" {
-//		//使用提交的表单登陆
-//		acname, _ = oauth.Login(w, r)
-//		//登陆失败
-//		if acname == "" {
-//			//返回页面，出现 登陆失败提示，用户名密码框+授权并登陆按钮+权限列表
-//			oauth.View.HTML(w, http.StatusOK, "oauth", nil)
-//			return
-//		}
-//	}
-
-//	//用户登陆成功，并确认授权，则进行下一步,根据请求,发放code 或token
-//	resp := oauth.Server.NewResponse()
-//	defer resp.Close()
-//	ar := oauth.Server.HandleAuthorizeRequest(resp, r)
-//	if ar != nil {
-//		//发放code 或token ,附加到redirect_uri后，并跳转
-//		//存储acname，acid,rsid,clientid,clientSecret等必要信息
-//		//ar.UserData = struct{ Acname string }{Acname: acname}
-//		acid := GetAcId(acname)
-//		ar.UserData = ATUserData{Ac_name: acname, Ac_id: acid}
-//		ar.Authorized = true
-
-//		oauth.Server.FinishAuthorizeRequest(resp, r, ar)
-//	}
-//	osin.OutputJSON(resp, w, r)
-//}
 
 func (oauth *OAuth) Token(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Println("Token:\r\n")
