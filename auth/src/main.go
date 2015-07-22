@@ -16,6 +16,7 @@ func main() {
 	oauth := action.NewOAuth()
 	register := action.NewRegister()
 	logout := action.NewLogout()
+	resource := action.NewResource()
 	//me := action.NewMe()
 
 	router := httprouter.New()
@@ -36,6 +37,8 @@ func main() {
 	router.POST("/oauth2/logout", logout.Get)
 	router.POST("/oauth2/register", register.Post)
 	router.POST("/oauth2/privilige", oauth.CheckPrivilige)
+
+	router.GET("/res/queryresId", resource.QueryResId)
 
 	fmt.Println("Server is start at ", time.Now().String(), " , on port 443")
 	log.Fatal(http.ListenAndServeTLS(":443", "./static/pem/servercert.pem", "./static/pem/serverkey.pem", router))

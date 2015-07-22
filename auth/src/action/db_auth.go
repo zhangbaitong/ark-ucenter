@@ -27,48 +27,6 @@ func GetOpenId(ac_id int, app_id string) (openid string) {
 
 }
 
-//通过app_id和res_name查询res_id
-func GetResId(res_name string) (res_id int) {
-	mydb := common.GetDB()
-	if mydb == nil {
-		fmt.Println("get db connection error")
-		return 0
-	}
-	defer common.FreeDB(mydb)
-
-	sqlStr := "select res_id from resource_tab where res_name=?"
-	rows, err := mydb.Query(sqlStr, res_name)
-	if err != nil {
-		fmt.Println("query res_id failure", err)
-		return 0
-	} else {
-		rows.Next()
-		rows.Scan(&res_id)
-		return res_id
-	}
-}
-
-//通过app_id和res_name查询res_id
-func GetResCname(res_name string) (res_cname string) {
-	mydb := common.GetDB()
-	if mydb == nil {
-		fmt.Println("get db connection error")
-		return ""
-	}
-	defer common.FreeDB(mydb)
-
-	sqlStr := "select res_cname from resource_tab where res_name=?"
-	rows, err := mydb.Query(sqlStr, res_name)
-	if err != nil {
-		fmt.Println("query res_id failure", err)
-		return ""
-	} else {
-		rows.Next()
-		rows.Scan(&res_cname)
-		return res_cname
-	}
-}
-
 //判断资源是否被授予给指定应用的指定用户
 func IsPersonConfered(app_id string, openid string, res_id int) bool {
 	mydb := common.GetDB()
