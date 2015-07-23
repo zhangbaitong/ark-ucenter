@@ -17,7 +17,7 @@ type Resource struct {
 	Create_time int
 }
 
-//通过app_id和res_name查询res_id
+//通过res_name查询res_id
 func GetResId(resName string) (resId int) {
 	mydb := common.GetDB()
 	if mydb == nil {
@@ -38,7 +38,7 @@ func GetResId(resName string) (resId int) {
 	}
 }
 
-//通过app_id和res_name查询res_id
+//通过res_name查询res_cname
 func GetResCname(resName string) (resCname string) {
 	mydb := common.GetDB()
 	if mydb == nil {

@@ -94,7 +94,9 @@ func login(oauth *OAuth, w http.ResponseWriter, r *http.Request) string {
 
 //检查是否登录，未登录，则返回登录页
 func checkLogin(oauth *OAuth, w http.ResponseWriter, r *http.Request) bool {
+	fmt.Println("checkLogin\r\n")
 	acname := oauth.Logged(w, r)
+	fmt.Println("checkLogin acname", acname)
 	if acname == "" {
 		common.ForwardPage(w, "./static/public/oauth2/login.html", map[string]string{"RequestURI": "/oauth2/login?" + r.URL.RawQuery})
 		return false
@@ -116,7 +118,6 @@ func checkAuthorize(oauth *OAuth, w http.ResponseWriter, r *http.Request, acname
 
 	for i := 0; i < len(arrScope); i++ {
 		resId := GetResId(arrScope[i])
-		fmt.Println("resId", arrScope)
 		if resId > 0 {
 			if !IsPersonConfered(clientId, openId, resId) {
 				resCname := GetResCname(arrScope[i])
@@ -162,7 +163,6 @@ func doAuthorizeRequest(oauth *OAuth, w http.ResponseWriter, r *http.Request) {
 func (oauth *OAuth) PostAuthorize(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	doAuthorizeRequest(oauth, w, r)
 }
-
 
 func (oauth *OAuth) Token(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Println("Token:\r\n")
@@ -354,4 +354,14 @@ func (oauth *OAuth) CheckPrivilige(w http.ResponseWriter, r *http.Request, _ htt
 		strBody := []byte("{\"Code\":0,\"Message\":\"OK \"}")
 		w.Write(strBody)
 	}
+}
+
+//通过openId获取用户资源权限列表
+func (oauth *OAuth) QueryPersonResList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	queryUrl := common.GetUrlParam(r)
+	openId := queryUrl["open_id"][0]
+	personRes := GetPersonResList(openId)
+	ret := make(map[string]interface{})
+	ret["personRes"] = personRes
+	common.Write(w, ret)
 }

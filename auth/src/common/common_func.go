@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/robfig/config"
 	"html/template"
@@ -151,4 +152,13 @@ func GetUrlParam(r *http.Request) map[string][]string {
 		return nil
 	}
 	return queryForm
+}
+
+//返回http结果
+func Write(w http.ResponseWriter, data interface{}) {
+	result, err := json.Marshal(data)
+	if err != nil {
+		result = []byte("")
+	}
+	w.Write(result)
 }

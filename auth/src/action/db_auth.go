@@ -5,6 +5,14 @@ import (
 	"fmt"
 )
 
+type PersonRes struct {
+	App_id      string
+	Openid      string
+	Res_id      int
+	Status      int
+	Create_time int
+}
+
 //通过ac_id和app_id查询openid
 func GetOpenId(ac_id int, app_id string) (openid string) {
 	mydb := common.GetDB()
@@ -135,4 +143,31 @@ func GetAcId(acName string) int {
 func GetOpenIdByacName(acName string, appId string) string {
 	acId := GetAcId(acName)
 	return GetOpenId(acId, appId)
+}
+
+//通过openId获取用户资源权限列表
+func GetPersonResList(openId string) []PersonRes {
+	mydb := common.GetDB()
+	if mydb == nil {
+		fmt.Println("get db connection error")
+		return nil
+	}
+	defer common.FreeDB(mydb)
+
+	sqlStr := "select app_id,openid,res_id,status,create_time from app_confered_person_tab where openId=?"
+	rows, err := mydb.Query(sqlStr, openId)
+
+	var personResList []PersonRes = make([]PersonRes, 0)
+
+	if err != nil {
+		fmt.Println("query res_id failure", err)
+		return nil
+	} else {
+		for rows.Next() {
+			var personRes PersonRes
+			rows.Scan(&personRes.App_id, &personRes.Openid, &personRes.Res_id, &personRes.Status, &personRes.Create_time)
+			personResList = append(personResList, personRes)
+		}
+	}
+	return personResList
 }
