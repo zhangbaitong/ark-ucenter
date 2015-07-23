@@ -123,4 +123,9 @@ func (old *AccessData) transfer() *osin.AccessData {
 type ATUserData struct {
 		Ac_name   string
 		Ac_id   int
-}	
+}
+
+type ATUserInfo struct {
+	Ac_id   int
+	Info map[string] string
+}

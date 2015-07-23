@@ -151,6 +151,9 @@ func doAuthorizeRequest(oauth *OAuth, w http.ResponseWriter, r *http.Request) {
 		//发放code 或token ,附加到redirect_uri后，并跳转
 		//存储acname，acid,rsid,clientid,clientSecret等必要信息
 		acname := oauth.Logged(w, r)
+		if acname==""{
+			acname = r.FormValue("acname")
+		}
 		acid := GetAcId(acname)
 		ar.UserData = ATUserData{Ac_name: acname, Ac_id: acid}
 		ar.Authorized = true
@@ -364,4 +367,40 @@ func (oauth *OAuth) QueryPersonResList(w http.ResponseWriter, r *http.Request, _
 	ret := make(map[string]interface{})
 	ret["personRes"] = personRes
 	common.Write(w, ret)
+}
+
+func (oauth *OAuth) SetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
+/*	
+	acname := oauth.Logged(w, req)
+	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
+	if acname=="" {
+		strBody = []byte("{\"Code\":1,\"Message\":\"user need login\"}")
+		w.Write(strBody)
+		return
+	}
+*/
+	acname:="18585816540"
+	acid := GetAcId(acname)
+	if acid==-1 {
+		strBody = []byte("{\"Code\":1,\"Message\":\"user not exist\"}")
+		w.Write(strBody)
+		return
+	}
+	
+	//var  info map[string]string
+	req.ParseForm()
+	info:=make(map[string] string)
+	for k, v := range req.Form {
+		info[k]= v[0]
+	}
+
+	var UserInfo ATUserInfo
+	UserInfo.Ac_id=acid
+	UserInfo.Info=info
+	ok:=UpdateUserInfo(&UserInfo)
+	if !ok {
+		strBody = []byte("{\"Code\":1,\"Message\":\"save data faild\"}")
+	}
+	w.Write(strBody)
 }

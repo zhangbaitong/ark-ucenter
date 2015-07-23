@@ -3,6 +3,7 @@ package action
 import (
 	"common"
 	"fmt"
+	 "gopkg.in/mgo.v2/bson" 
 )
 
 type PersonRes struct {
@@ -170,4 +171,52 @@ func GetPersonResList(openId string) []PersonRes {
 		}
 	}
 	return personResList
+}
+
+
+//查询账户是否存在
+func isUserExist_i(name string, value int) (UserInfo* ATUserInfo,ok bool) {
+	session := common.GetSession()
+	if(session==nil){
+		return nil,false
+	}	
+	defer common.FreeSession(session)
+
+	result := ATUserInfo{}
+	coll := session.DB("at_db").C("user_tab")
+
+	err:=coll.Find(&bson.M{name:value}).Sort(name).One(&result)
+	if err!=nil {
+		return nil,false;
+	}
+
+	return &result,true
+}
+
+func UpdateUserInfo(UserInfo* ATUserInfo) (ok bool) {
+	session := common.GetSession()
+	if(session==nil){
+		return false
+	}	
+	defer common.FreeSession(session)
+
+	old_info,ok:=isUserExist_i("Ac_id",UserInfo.Ac_id)
+	coll := session.DB("at_db").C("user_tab")	
+	if ok {
+	fmt.Println("UpdateUserInfo line 206")		
+		for k, v := range UserInfo.Info {
+			old_info.Info[k]=v
+		}		
+		condition:=bson.M{"Ac_id":UserInfo.Ac_id}
+		err := coll.Update(condition, bson.M{"$set": bson.M{"Info": old_info.Info}})
+		if(err==nil){
+			return true
+		}
+		return false
+	}
+	err:=coll.Insert(UserInfo)
+	if(err!=nil){		
+		return false
+	}
+	return true
 }
