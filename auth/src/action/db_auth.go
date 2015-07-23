@@ -200,20 +200,20 @@ func UpdateUserInfo(UserInfo* ATUserInfo) (ok bool) {
 	}	
 	defer common.FreeSession(session)
 
-	old_info,ok:=isUserExist_i("Ac_id",UserInfo.Ac_id)
+	old_info,ok:=isUserExist_i("ac_id",UserInfo.Ac_id)
 	coll := session.DB("at_db").C("user_tab")	
 	if ok {
-	fmt.Println("UpdateUserInfo line 206")		
 		for k, v := range UserInfo.Info {
 			old_info.Info[k]=v
 		}		
-		condition:=bson.M{"Ac_id":UserInfo.Ac_id}
-		err := coll.Update(condition, bson.M{"$set": bson.M{"Info": old_info.Info}})
+		condition:=bson.M{"ac_id":UserInfo.Ac_id}
+		err := coll.Update(condition, bson.M{"$set": bson.M{"info": old_info.Info}})
 		if(err==nil){
 			return true
 		}
 		return false
 	}
+	
 	err:=coll.Insert(UserInfo)
 	if(err!=nil){		
 		return false
