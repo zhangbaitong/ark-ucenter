@@ -320,40 +320,80 @@ func (oauth *OAuth) Get(w http.ResponseWriter, req *http.Request, ps httprouter.
 	w.Write(result)
 }
 
+//func (oauth *OAuth) CheckPrivilige(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+//	fmt.Println("CheckPrivilige:\r\n")
+
+//	strToken := r.FormValue("token")
+//	strPrivilige := r.FormValue("privilige")
+//	if strToken == "" {
+//		strBody := []byte("{\"Code\":1,\"Message\":\"token can not be empty \"}")
+//		w.Write(strBody)
+//		return
+//	}
+//	if strPrivilige == "" {
+//		strBody := []byte("{\"Code\":1,\"Message\":\"privilige can not be empty \"}")
+//		w.Write(strBody)
+//		return
+//	}
+
+//	ret, err := oauth.Server.Storage.LoadAccess(strToken)
+//	fmt.Println(err)
+//	if err != nil {
+//		strBody := []byte("{\"Code\":1,\"Message\":\"user token not exist \"}")
+//		w.Write(strBody)
+//		return
+//	}
+
+//	fmt.Println("ret.Scope=", ret.Scope)
+//	fmt.Println("strPrivilige=", strPrivilige)
+//	if !strings.Contains(ret.Scope, strPrivilige) {
+//		strBody := []byte("{\"Code\":1,\"Message\":\"no privilige\"}")
+//		w.Write(strBody)
+//		return
+//	} else {
+//		strBody := []byte("{\"Code\":0,\"Message\":\"OK \"}")
+//		w.Write(strBody)
+//	}
+//}
+
+//检查token拥有的资源
 func (oauth *OAuth) CheckPrivilige(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	fmt.Println("CheckPrivilige:\r\n")
+	flag := true
+	queryUrl := common.GetUrlParam(r)
+	clientId := queryUrl["client_id"][0]
 
-	strToken := r.FormValue("token")
-	strPrivilige := r.FormValue("privilige")
-	if strToken == "" {
-		strBody := []byte("{\"Code\":1,\"Message\":\"token can not be empty \"}")
-		w.Write(strBody)
-		return
-	}
-	if strPrivilige == "" {
-		strBody := []byte("{\"Code\":1,\"Message\":\"privilige can not be empty \"}")
-		w.Write(strBody)
-		return
-	}
-
-	ret, err := oauth.Server.Storage.LoadAccess(strToken)
-	fmt.Println(err)
+	token := queryUrl["token"][0]
+	storage, err := oauth.Server.Storage.LoadAccess(token)
 	if err != nil {
-		strBody := []byte("{\"Code\":1,\"Message\":\"user token not exist \"}")
-		w.Write(strBody)
-		return
+		fmt.Println("get token storage failure")
 	}
 
-	fmt.Println("ret.Scope=", ret.Scope)
-	fmt.Println("strPrivilige=", strPrivilige)
-	if !strings.Contains(ret.Scope, strPrivilige) {
-		strBody := []byte("{\"Code\":1,\"Message\":\"no privilige\"}")
-		w.Write(strBody)
-		return
+	if clientId != storage.Client.GetId() {
+		flag = false
 	} else {
-		strBody := []byte("{\"Code\":0,\"Message\":\"OK \"}")
-		w.Write(strBody)
+		openId := ""
+		if queryUrl["open_id"] != nil {
+			openId = queryUrl["open_id"][0]
+		}
+
+		if openId != "" {
+			userData := storage.UserData.(map[string]interface{})
+			acId := int(userData["Ac_id"].(float64))
+			storageOpenId := GetOpenId(acId, clientId)
+			if openId != storageOpenId {
+				flag = false
+			}
+		}
 	}
+
+	ret := make(map[string]interface{})
+	if flag {
+		ret["code"] = 0
+		ret["data"] = storage.Scope
+	} else {
+		ret["code"] = 1
+	}
+	common.Write(w, ret)
 }
 
 //通过openId获取用户资源权限列表
