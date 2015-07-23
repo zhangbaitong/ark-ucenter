@@ -32,6 +32,8 @@ func main() {
 	router.GET("/oauth2/token", oauth.Token)
 	//Step4:通过Access Token获取用户OpenID
 	router.GET("/oauth2/me", oauth.Get)
+	router.GET("/oauth2/queryPersonRes", oauth.QueryPersonResList)
+	router.GET("/oauth2/privilige", oauth.CheckPrivilige)
 
 	router.GET("/oauth2/logout", logout.Get)
 	router.POST("/oauth2/logout", logout.Get)
@@ -39,9 +41,14 @@ func main() {
 	router.POST("/oauth2/privilige", oauth.CheckPrivilige)
 	router.POST("/oauth2/set_user_info", oauth.SetUserInfo)
 
-	router.GET("/res/queryresId", resource.QueryResId)
+	router.GET("/res/queryResId", resource.QueryResId)
+	router.GET("/res/queryResCname", resource.QueryResCname)
+	router.GET("/res/queryResByAppId", resource.QueryResByAppId)
+	router.GET("/res/queryResByResName", resource.QueryResByResName)
+	router.GET("/res/addResource", resource.AddResource)
+	router.GET("/res/modifyResourceStatus", resource.ModifyResourceStatus)
 
 	fmt.Println("Server is start at ", time.Now().String(), " , on port 443")
-	//log.Fatal(http.ListenAndServeTLS(":443", "./static/pem/servercert.pem", "./static/pem/serverkey.pem", router))
-	log.Fatal(http.ListenAndServe(":8080",  router))
+	log.Fatal(http.ListenAndServeTLS(":443", "./static/pem/servercert.pem", "./static/pem/serverkey.pem", router))
+	//log.Fatal(http.ListenAndServe(":443",  router))
 }
