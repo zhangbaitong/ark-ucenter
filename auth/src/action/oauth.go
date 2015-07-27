@@ -151,7 +151,7 @@ func doAuthorizeRequest(oauth *OAuth, w http.ResponseWriter, r *http.Request) {
 		//发放code 或token ,附加到redirect_uri后，并跳转
 		//存储acname，acid,rsid,clientid,clientSecret等必要信息
 		acname := oauth.Logged(w, r)
-		if acname==""{
+		if acname == "" {
 			acname = r.FormValue("acname")
 		}
 		acid := GetAcId(acname)
@@ -221,7 +221,28 @@ func checkAccessRequest(oauth *OAuth, w http.ResponseWriter, r *http.Request, ar
 			//通过redirect_uri 返回错误约定 并跳转到改redirect_uri
 		}
 	case osin.CLIENT_CREDENTIALS:
+		//校验appId和appKey是否正确
+		if ar.Client.GetSecret() != GetAppKey(ar.Client.GetId()) {
+			ar.Authorized = false
+			return ar
+		}
+
 		ar.Authorized = true
+		//校验申请的资源是否已经给第三方应用授权
+		resources := ""
+		arrScope := strings.Split(ar.Scope, ",")
+		for i := 0; i < len(arrScope); i++ {
+			resId := GetResId(arrScope[i])
+			if IsAppConfered(ar.Client.GetId(), resId) {
+				if resources == "" {
+					resources += arrScope[i]
+				} else {
+					resources += "," + arrScope[i]
+				}
+			}
+		}
+		//重新给token绑定资源
+		ar.Scope = resources
 	case osin.ASSERTION:
 		if ar.AssertionType == "urn:osin.example.complete" && ar.Assertion == "osin.data" {
 			ar.Authorized = true
@@ -374,9 +395,9 @@ func (oauth *OAuth) QueryPersonResList(w http.ResponseWriter, r *http.Request, _
 }
 
 func (oauth *OAuth) SetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
+	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
 	acname := oauth.Logged(w, req)
-	if acname=="" {
+	if acname == "" {
 		strBody = []byte("{\"Code\":1,\"Message\":\"user need login\"}")
 		w.Write(strBody)
 		return
@@ -384,23 +405,23 @@ func (oauth *OAuth) SetUserInfo(w http.ResponseWriter, req *http.Request, _ http
 
 	//acname:="18585816540"
 	acid := GetAcId(acname)
-	if acid==-1 {
+	if acid == -1 {
 		strBody = []byte("{\"Code\":1,\"Message\":\"user not exist\"}")
 		w.Write(strBody)
 		return
 	}
-	
+
 	//var  info map[string]string
 	req.ParseForm()
-	info:=make(map[string] string)
+	info := make(map[string]string)
 	for k, v := range req.Form {
-		info[k]= v[0]
+		info[k] = v[0]
 	}
 
 	var UserInfo ATUserInfo
-	UserInfo.Ac_id=acid
-	UserInfo.Info=info
-	ok:=UpdateUserInfo(&UserInfo)
+	UserInfo.Ac_id = acid
+	UserInfo.Info = info
+	ok := UpdateUserInfo(&UserInfo)
 	if !ok {
 		strBody = []byte("{\"Code\":1,\"Message\":\"save data faild\"}")
 	}
@@ -408,23 +429,23 @@ func (oauth *OAuth) SetUserInfo(w http.ResponseWriter, req *http.Request, _ http
 }
 
 func (oauth *OAuth) MultiLogin(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
+	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
 	strFields := req.FormValue("fields")
 	strValue := req.FormValue("Value")
 	strPassword := req.FormValue("password")
 	if strValue == "" || strPassword == "" {
 		strBody = []byte("{\"Code\":1,\"Message\":\"password is empty!!\"}")
 		w.Write(strBody)
-		return 
+		return
 	}
 
-	strName,_ := LoginMulti(strFields,strValue,strPassword)
-	if len(strName)>0 {
+	strName, _ := LoginMulti(strFields, strValue, strPassword)
+	if len(strName) > 0 {
 		oauth.GenerateCookie(w, req, strName, 1)
 		w.Write(strBody)
-		return 
+		return
 	} else {
-		return 
+		return
 	}
 
 	if !checkAuthorize(oauth, w, req, strName) {

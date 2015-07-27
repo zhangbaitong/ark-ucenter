@@ -9,7 +9,6 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
-
 type AtStorage struct {
 	clients   map[string]osin.Client
 	authorize map[string]*osin.AuthorizeData
@@ -156,24 +155,28 @@ func (s *AtStorage) RemoveAuthorize(code string) error {
 func (s *AtStorage) SaveAccess(data *osin.AccessData) error {
 	fmt.Printf("SaveAccess:%s\n", data.AccessToken)
 	ret := toJSON(data)
-	strKey:="access:" + data.AccessToken
+	strKey := "access:" + data.AccessToken
 	setValue(strKey, ret)
 	if data.RefreshToken != "" {
-		setValue("refresh:"+data.RefreshToken, toJSON(data.AccessToken))
+		//		setValue("refresh:"+data.RefreshToken, toJSON(data.AccessToken))
+		setValue("refresh:"+data.RefreshToken, data.AccessToken)
 	}
 	return nil
 }
 
 func (s *AtStorage) LoadAccess(code string) (*osin.AccessData, error) {
 	fmt.Printf("LoadAccess:%s\n", code)
-	strKey:="access:" + code
+	strKey := "access:" + code
 	ret := getValue(strKey)
+	fmt.Println("strKey", strKey)
+	fmt.Println("LoadAccess", ret)
+
 	if ret == "" {
 		return nil, errors.New("access not found")
 	}
 	fmt.Printf("LoadAccess:\n%s\n", ret)
 	var accessData AccessData
-	fromJSON(ret, &accessData)	
+	fromJSON(ret, &accessData)
 	return accessData.transfer(), nil
 }
 
@@ -191,11 +194,10 @@ func (s *AtStorage) LoadRefresh(code string) (*osin.AccessData, error) {
 	fmt.Printf("LoadRefresh: %s\n", code)
 
 	ret := getValue("refresh:" + code)
-
-	if ret != "" {
+	if ret == "" {
 		return nil, errors.New("Refresh not found")
 	}
-	return s.LoadAccess(code)
+	return s.LoadAccess(ret)
 }
 
 func (s *AtStorage) RemoveRefresh(code string) error {
