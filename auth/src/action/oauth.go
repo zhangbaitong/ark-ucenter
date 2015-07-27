@@ -323,42 +323,6 @@ func (oauth *OAuth) Get(w http.ResponseWriter, req *http.Request, ps httprouter.
 	w.Write(result)
 }
 
-//func (oauth *OAuth) CheckPrivilige(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-//	fmt.Println("CheckPrivilige:\r\n")
-
-//	strToken := r.FormValue("token")
-//	strPrivilige := r.FormValue("privilige")
-//	if strToken == "" {
-//		strBody := []byte("{\"Code\":1,\"Message\":\"token can not be empty \"}")
-//		w.Write(strBody)
-//		return
-//	}
-//	if strPrivilige == "" {
-//		strBody := []byte("{\"Code\":1,\"Message\":\"privilige can not be empty \"}")
-//		w.Write(strBody)
-//		return
-//	}
-
-//	ret, err := oauth.Server.Storage.LoadAccess(strToken)
-//	fmt.Println(err)
-//	if err != nil {
-//		strBody := []byte("{\"Code\":1,\"Message\":\"user token not exist \"}")
-//		w.Write(strBody)
-//		return
-//	}
-
-//	fmt.Println("ret.Scope=", ret.Scope)
-//	fmt.Println("strPrivilige=", strPrivilige)
-//	if !strings.Contains(ret.Scope, strPrivilige) {
-//		strBody := []byte("{\"Code\":1,\"Message\":\"no privilige\"}")
-//		w.Write(strBody)
-//		return
-//	} else {
-//		strBody := []byte("{\"Code\":0,\"Message\":\"OK \"}")
-//		w.Write(strBody)
-//	}
-//}
-
 //检查token拥有的资源
 func (oauth *OAuth) CheckPrivilige(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	flag := true
@@ -410,17 +374,15 @@ func (oauth *OAuth) QueryPersonResList(w http.ResponseWriter, r *http.Request, _
 }
 
 func (oauth *OAuth) SetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
-/*	
+	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
 	acname := oauth.Logged(w, req)
-	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
 	if acname=="" {
 		strBody = []byte("{\"Code\":1,\"Message\":\"user need login\"}")
 		w.Write(strBody)
 		return
 	}
-*/
-	acname:="18585816540"
+
+	//acname:="18585816540"
 	acid := GetAcId(acname)
 	if acid==-1 {
 		strBody = []byte("{\"Code\":1,\"Message\":\"user not exist\"}")
@@ -443,4 +405,30 @@ func (oauth *OAuth) SetUserInfo(w http.ResponseWriter, req *http.Request, _ http
 		strBody = []byte("{\"Code\":1,\"Message\":\"save data faild\"}")
 	}
 	w.Write(strBody)
+}
+
+func (oauth *OAuth) MultiLogin(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
+	strFields := req.FormValue("fields")
+	strValue := req.FormValue("Value")
+	strPassword := req.FormValue("password")
+	if strValue == "" || strPassword == "" {
+		strBody = []byte("{\"Code\":1,\"Message\":\"password is empty!!\"}")
+		w.Write(strBody)
+		return 
+	}
+
+	strName,_ := LoginMulti(strFields,strValue,strPassword)
+	if len(strName)>0 {
+		oauth.GenerateCookie(w, req, strName, 1)
+		w.Write(strBody)
+		return 
+	} else {
+		return 
+	}
+
+	if !checkAuthorize(oauth, w, req, strName) {
+		return
+	}
+	doAuthorizeRequest(oauth, w, req)
 }

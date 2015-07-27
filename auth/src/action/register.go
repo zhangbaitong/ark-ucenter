@@ -1,8 +1,8 @@
 package action
 
 import (
-	"common"
-	"fmt"
+	_"common"
+	_"fmt"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
@@ -30,39 +30,24 @@ func (register *Register) Post(w http.ResponseWriter, req *http.Request, _ httpr
 	acname := req.FormValue("acname")
 	password := req.FormValue("password")
 	account := Account{Ac_name: acname, Ac_password: password}
-	ok := register_insert(&account)
-	if ok {
-		w.Write([]byte("0"))
-	} else {
-		w.Write([]byte("-1"))
+	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
+	ok := RegisterInsert(&account)
+	if !ok {
+		strBody = []byte("{\"Code\":1,\"Message\":\"insert db faild!!\"}")
 	}
+	w.Write(strBody)
 }
 
-func register_insert(ac *Account) (ok bool) {
-	mydb := common.GetDB()
-	if mydb == nil {
-		return false
-	}
-	defer common.FreeDB(mydb)
+func (register *Register) RegisterMulti(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	req.ParseForm()
 
-	tx, err := mydb.Begin()
-	if err != nil {
-		fmt.Println(err)
-		return false
+	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
+	for k, v := range req.Form {
+		ok := MultiRegister(k,v[0])
+		if !ok {
+			strBody = []byte("{\"Code\":1,\"Message\":\"insert db faild!!\"}")
+		}
+		break
 	}
-
-	stmt, err := tx.Prepare(INSERT)
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(ac.Ac_name, ac.Ac_password, 0)
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
-	tx.Commit()
-	return true
+	w.Write(strBody)
 }

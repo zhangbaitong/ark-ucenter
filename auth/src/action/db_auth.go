@@ -4,6 +4,7 @@ import (
 	"common"
 	"fmt"
 	 "gopkg.in/mgo.v2/bson" 
+	"strings"
 )
 
 type PersonRes struct {
@@ -193,6 +194,24 @@ func isUserExist_i(name string, value int) (UserInfo* ATUserInfo,ok bool) {
 	return &result,true
 }
 
+func isUserExist(name, value string) (UserInfo* ATUserInfo,ok bool) {
+	session := common.GetSession()
+	if(session==nil){
+		return nil,false
+	}	
+	defer common.FreeSession(session)
+
+	result := ATUserInfo{}
+	coll := session.DB("at_db").C("user_tab")
+
+	err:=coll.Find(&bson.M{name:value}).Sort(name).One(&result)
+	if err!=nil {
+		return nil,false;
+	}
+
+	return &result,true
+}
+
 func UpdateUserInfo(UserInfo* ATUserInfo) (ok bool) {
 	session := common.GetSession()
 	if(session==nil){
@@ -218,5 +237,124 @@ func UpdateUserInfo(UserInfo* ATUserInfo) (ok bool) {
 	if(err!=nil){		
 		return false
 	}
+	return true
+}
+
+func LoginById(ac_id int,strPassword string) (strName string,ok bool) {
+	strSQL := fmt.Sprintf("select ac_name from account_tab where ac_id=%d and ac_password='%s'", ac_id,strPassword)
+	mydb := common.GetDB()
+	if mydb == nil {
+		fmt.Println("get db connection error")
+		return "",false
+	}
+	defer common.FreeDB(mydb)
+
+	rows, err := mydb.Query(strSQL)
+	if err != nil {
+		return "",false
+	} else {
+		defer rows.Close()
+		for rows.Next() {
+			rows.Scan(&strName)
+		}
+		if len(strName) == 0 {
+			return "",false
+		}
+	}
+	return strName,false
+}
+/*
+	ok:=action.LoginMulti("qq,mobile,email","26343637","222222")
+	if ok {
+		fmt.Println("success")
+	} else {
+
+		fmt.Println("faild")
+	}
+	return;
+*/
+func LoginMulti(strFieldList,strValue,strPassword string) (strName string,ok bool) {
+	FieldList:=strings.Split(strFieldList, ",")
+	//fmt.Println("Count=",len(FieldList))
+	condition := make([]bson.M, len(FieldList))
+	var strTemp string
+	for i := 0; i < len(FieldList); i++ {
+		strTemp="info."+strings.ToLower(FieldList[i])
+		condition[i]=bson.M{strTemp:strValue}
+	}
+	condition_or:=bson.M{"$or":condition}
+
+	session := common.GetSession()
+	if(session==nil){
+		return "",false
+	}	
+	defer common.FreeSession(session)
+
+	result := []ATUserInfo{}
+	coll := session.DB("at_db").C("user_tab")
+	err:=coll.Find(condition_or).Sort("ac_id").All(&result)
+	if(err!=nil){
+		fmt.Println("faild")
+		return "",false
+	}
+	
+	for _, m := range result {
+		strName,ok:=LoginById(m.Ac_id,strPassword)
+		if ok {
+			return strName,true
+		}
+	}
+	return "",false
+}
+
+func MultiRegister(strName,strValue string) (ok bool){
+	session := common.GetSession()
+	if(session==nil){
+		return false
+	}	
+	defer common.FreeSession(session)
+
+	coll := session.DB("at_db").C("user_tab")
+	strNode:="info."+strName
+	_,OK:=isUserExist(strNode,strValue)
+	if OK {
+		return true
+	}
+	var UserInfo ATUserInfo
+	UserInfo.Ac_id=-1;
+	UserInfo.Info[strName]=strValue
+	err:=coll.Insert(&UserInfo)
+	if(err!=nil){		
+		return false
+	}
+	return true
+}
+
+func RegisterInsert(ac *Account) (ok bool) {
+	mydb := common.GetDB()
+	if mydb == nil {
+		return false
+	}
+	defer common.FreeDB(mydb)
+
+	tx, err := mydb.Begin()
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	stmt, err := tx.Prepare(INSERT)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(ac.Ac_name, ac.Ac_password, 0)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	tx.Commit()
 	return true
 }
