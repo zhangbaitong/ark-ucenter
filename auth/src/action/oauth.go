@@ -346,42 +346,52 @@ func (oauth *OAuth) Get(w http.ResponseWriter, req *http.Request, ps httprouter.
 
 //检查token拥有的资源
 func (oauth *OAuth) CheckPrivilige(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	resp := oauth.Server.NewResponse()
+
 	flag := true
 	queryUrl := common.GetUrlParam(r)
 	clientId := queryUrl["client_id"][0]
 
 	token := queryUrl["token"][0]
 	storage, err := oauth.Server.Storage.LoadAccess(token)
+
 	if err != nil {
 		fmt.Println("get token storage failure")
-	}
-
-	if clientId != storage.Client.GetId() {
 		flag = false
 	} else {
-		openId := ""
-		if queryUrl["open_id"] != nil {
-			openId = queryUrl["open_id"][0]
-		}
-
-		if openId != "" {
-			userData := storage.UserData.(map[string]interface{})
-			acId := int(userData["Ac_id"].(float64))
-			storageOpenId := GetOpenId(acId, clientId)
-			if openId != storageOpenId {
+		if storage.CreatedAt.Add(time.Duration(3600) * time.Second).Before(oauth.Server.Now()) {
+			flag = false
+			resp.SetError("invalid_grant test", "")
+		} else {
+			if clientId != storage.Client.GetId() {
 				flag = false
+			} else {
+				openId := ""
+				if queryUrl["open_id"] != nil {
+					openId = queryUrl["open_id"][0]
+				}
+
+				if openId != "" {
+					userData := storage.UserData.(map[string]interface{})
+					acId := int(userData["Ac_id"].(float64))
+					storageOpenId := GetOpenId(acId, clientId)
+					if openId != storageOpenId {
+						flag = false
+					}
+				}
 			}
 		}
 	}
 
-	ret := make(map[string]interface{})
 	if flag {
-		ret["code"] = 0
-		ret["data"] = storage.Scope
+		resp.Output["code"] = 0
+		resp.Output["data"] = storage.Scope
 	} else {
-		ret["code"] = 1
+		resp.Output["code"] = 1
 	}
-	common.Write(w, ret)
+	//	common.Write(w, ret)
+	osin.OutputJSON(resp, w, r)
+
 }
 
 //通过openId获取用户资源权限列表
@@ -429,7 +439,7 @@ func (oauth *OAuth) SetUserInfo(w http.ResponseWriter, req *http.Request, _ http
 }
 
 func (oauth *OAuth) MultiLogin(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
+	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
 	strName := req.FormValue("acname")
 	strPassword := req.FormValue("password")
 	if strName == "" || strPassword == "" {
@@ -438,8 +448,8 @@ func (oauth *OAuth) MultiLogin(w http.ResponseWriter, req *http.Request, _ httpr
 		return
 	}
 
-	strACName,_ := LoginMulti(strName,strPassword)
-	if len(strACName)>0 {
+	strACName, _ := LoginMulti(strName, strPassword)
+	if len(strACName) > 0 {
 		oauth.GenerateCookie(w, req, strACName, 1)
 		w.Write(strBody)
 		return

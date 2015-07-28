@@ -168,13 +168,11 @@ func (s *AtStorage) LoadAccess(code string) (*osin.AccessData, error) {
 	fmt.Printf("LoadAccess:%s\n", code)
 	strKey := "access:" + code
 	ret := getValue(strKey)
-	fmt.Println("strKey", strKey)
-	fmt.Println("LoadAccess", ret)
 
 	if ret == "" {
 		return nil, errors.New("access not found")
 	}
-	fmt.Printf("LoadAccess:\n%s\n", ret)
+
 	var accessData AccessData
 	fromJSON(ret, &accessData)
 	return accessData.transfer(), nil

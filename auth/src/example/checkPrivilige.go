@@ -64,35 +64,41 @@ func (d *DefaultClient) GetUserData() interface{} {
 }
 
 func main() {
-	// Application destination - REFRESH
-	http.HandleFunc("/appauth/refresh", func(w http.ResponseWriter, r *http.Request) {
+
+	http.HandleFunc("/check", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("callback!!!!\r\n")
 		r.ParseForm()
 
 		w.Write([]byte("<html><body>"))
-		w.Write([]byte("APP AUTH - REFRESH<br/>"))
-		defer w.Write([]byte("</body></html>"))
 
+		aurl := fmt.Sprintf("https://connect.funzhou.cn/oauth.CheckPrivilige?grant_type=client_credentials&scope=get_user_info,getUsername,list_photo,upload_pic")
+		w.Write([]byte("<h4>" + aurl + "</h4>"))
+		w.Write([]byte("<h4>取得如下信息</h4>"))
 		jr := make(map[string]interface{})
-
-		err := DownloadAccessToken(fmt.Sprintf("https://connect.funzhou.cn/oauth2/token?grant_type=refresh_token&refresh_token=4MDk1xa-SuGn-1JnAjDSkA"),
-			&osin.BasicAuth{Username: "1234", Password: "aabbccdd"}, jr)
+		err := DownloadAccessToken(aurl, &osin.BasicAuth{"1234", "aabbccdd"}, jr)
 		if err != nil {
 			w.Write([]byte(err.Error()))
 			w.Write([]byte("<br/>"))
 		}
-
 		// show json error
 		if erd, ok := jr["error"]; ok {
 			w.Write([]byte(fmt.Sprintf("ERROR: %s<br/>\n", erd)))
 		}
-
 		// show json access token
-		if at, ok := jr["access_token"]; ok {
-			w.Write([]byte(fmt.Sprintf("ACCESS TOKEN: %s<br/>\n", at)))
+		token, ok := jr["access_token"]
+		if ok {
+			w.Write([]byte(fmt.Sprintf("授权令牌access_token: %s<br/>\n", token)))
 		}
-
-		w.Write([]byte(fmt.Sprintf("FULL RESULT: %+v<br/>\n", jr)))
-
+		if at, ok := jr["expires_in"]; ok {
+			w.Write([]byte(fmt.Sprintf("有效期expires_in: %f秒<br/>\n", at)))
+		}
+		if at, ok := jr["refresh_token"]; ok {
+			w.Write([]byte(fmt.Sprintf("续期刷新令牌refresh_token: %s<br/>\n", at)))
+		}
+		if at, ok := jr["scope"]; ok {
+			w.Write([]byte(fmt.Sprintf("正式授予的权限scope: %s<br/>\n", at)))
+		}
+		defer w.Write([]byte("</body></html>"))
 	})
 
 	fmt.Println("Server is start at ", time.Now().String(), " , on port 8080")
@@ -116,7 +122,6 @@ func DownloadAccessToken(url string, auth *osin.BasicAuth, output map[string]int
 	}
 
 	if presp.StatusCode != 200 {
-		fmt.Println(" presp.StatusCode", presp.StatusCode)
 		return errors.New("Invalid status code")
 	}
 	jdec := json.NewDecoder(presp.Body)
