@@ -273,14 +273,13 @@ func LoginById(ac_id int,strPassword string) (strName string,ok bool) {
 	}
 	return;
 */
-func LoginMulti(strFieldList,strValue,strPassword string) (strName string,ok bool) {
-	FieldList:=strings.Split(strFieldList, ",")
-	//fmt.Println("Count=",len(FieldList))
+func LoginMulti(strName,strPassword string) (strACName string,ok bool) {
+	FieldList:=GetSearchFieldes();
 	condition := make([]bson.M, len(FieldList))
 	var strTemp string
 	for i := 0; i < len(FieldList); i++ {
 		strTemp="info."+strings.ToLower(FieldList[i])
-		condition[i]=bson.M{strTemp:strValue}
+		condition[i]=bson.M{strTemp:strName}
 	}
 	condition_or:=bson.M{"$or":condition}
 
@@ -299,9 +298,9 @@ func LoginMulti(strFieldList,strValue,strPassword string) (strName string,ok boo
 	}
 	
 	for _, m := range result {
-		strName,ok:=LoginById(m.Ac_id,strPassword)
+		strACName,ok:=LoginById(m.Ac_id,strPassword)
 		if ok {
-			return strName,true
+			return strACName,true
 		}
 	}
 	return "",false

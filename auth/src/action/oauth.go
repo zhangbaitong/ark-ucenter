@@ -429,26 +429,25 @@ func (oauth *OAuth) SetUserInfo(w http.ResponseWriter, req *http.Request, _ http
 }
 
 func (oauth *OAuth) MultiLogin(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
-	strFields := req.FormValue("fields")
-	strValue := req.FormValue("Value")
+	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
+	strName := req.FormValue("acname")
 	strPassword := req.FormValue("password")
-	if strValue == "" || strPassword == "" {
+	if strName == "" || strPassword == "" {
 		strBody = []byte("{\"Code\":1,\"Message\":\"password is empty!!\"}")
 		w.Write(strBody)
 		return
 	}
 
-	strName, _ := LoginMulti(strFields, strValue, strPassword)
-	if len(strName) > 0 {
-		oauth.GenerateCookie(w, req, strName, 1)
+	strACName,_ := LoginMulti(strName,strPassword)
+	if len(strACName)>0 {
+		oauth.GenerateCookie(w, req, strACName, 1)
 		w.Write(strBody)
 		return
 	} else {
 		return
 	}
 
-	if !checkAuthorize(oauth, w, req, strName) {
+	if !checkAuthorize(oauth, w, req, strACName) {
 		return
 	}
 	doAuthorizeRequest(oauth, w, req)
