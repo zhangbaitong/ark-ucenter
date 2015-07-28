@@ -49,6 +49,9 @@ func main() {
 	router.GET("/res/addResource", resource.AddResource)
 	router.GET("/res/modifyResourceStatus", resource.ModifyResourceStatus)
 
+	router.GET("/admin/get_search_fieldes", action.GetSearchFieldList)
+	router.POST("/admin/update_search_fieldes", action.UpdateSearchFieldList)
+
 	fmt.Println("Server is start at ", time.Now().String(), " , on port 443")
 	log.Fatal(http.ListenAndServeTLS(":443", "./static/pem/servercert.pem", "./static/pem/serverkey.pem", router))
 	//log.Fatal(http.ListenAndServe(":443",  router))
