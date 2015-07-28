@@ -39,8 +39,11 @@ func main() {
 	router.GET("/oauth2/logout", logout.Get)
 	router.POST("/oauth2/logout", logout.Get)
 	router.POST("/oauth2/register", register.Post)
+	router.POST("/oauth2/multi_register", register.RegisterMulti)
+
 	router.POST("/oauth2/privilige", oauth.CheckPrivilige)
 	router.POST("/oauth2/set_user_info", oauth.SetUserInfo)
+	router.POST("/oauth2/multi_login", oauth.MultiLogin)
 
 	router.GET("/res/queryResId", resource.QueryResId)
 	router.GET("/res/queryResCname", resource.QueryResCname)
