@@ -53,7 +53,7 @@ func (oauth *OAuth) GetAuthorize(w http.ResponseWriter, r *http.Request, _ httpr
 }
 
 func (oauth *OAuth) PostLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	acname := login(w, r)
+	acname := UserLogin(w, r)
 	if acname == "" {
 		return
 	}
@@ -61,22 +61,6 @@ func (oauth *OAuth) PostLogin(w http.ResponseWriter, r *http.Request, _ httprout
 		return
 	}
 	doAuthorizeRequest(oauth, w, r)
-}
-
-//登录
-func login(w http.ResponseWriter, r *http.Request) string {
-	fmt.Println("Login\r\n")
-	acname := GetCookieName(r)
-	if acname == "" {
-		//使用提交的表单登陆
-		acname, _ = Login(w, r)
-		//登陆失败
-		if acname == "" {
-			//返回页面，出现 登陆失败提示，用户名密码框+授权并登陆按钮+权限列表
-			common.ForwardPage(w, "./static/public/oauth2/login.html", map[string]string{"RequestURI": r.RequestURI})
-		}
-	}
-	return acname
 }
 
 //检查是否登录，未登录，则返回登录页
