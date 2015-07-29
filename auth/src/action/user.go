@@ -57,28 +57,6 @@ func RegisterMulti(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 	w.Write(strBody)
 }
 
-/*
-//检查是否登录，未登录，则返回登录页
-func checkLogin(oauth *OAuth, w http.ResponseWriter, r *http.Request) bool {
-	fmt.Println("checkLogin\r\n")
-	acname := Logged(w, r)
-	fmt.Println("checkLogin acname", acname)
-	if acname == "" {
-		common.ForwardPage(w, "./static/public/oauth2/login.html", map[string]string{"RequestURI": "/oauth2/login?" + r.URL.RawQuery})
-		return false
-	}
-	return true
-}
-
-func Logged(w http.ResponseWriter, req *http.Request) string {
-	cookie, err := req.Cookie(COOKIENAME)
-	if err == nil {
-		return authcookie.Login(cookie.Value, []byte(KEY))
-	}
-	return ""
-}
-*/
-
 func Login(w http.ResponseWriter, req *http.Request) (string, error) {
 	acname := req.FormValue("acname")
 	password := req.FormValue("password")
