@@ -38,7 +38,7 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	acname := req.FormValue("acname")
 	password := req.FormValue("password")
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
-	ok:=GetUser(acname)
+	_,ok:=GetUser(acname)
 	if !ok {
 		strBody = []byte("{\"Code\":1,\"Message\":\"user existed\"}")
 		w.Write(strBody)
