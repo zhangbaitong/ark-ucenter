@@ -37,9 +37,16 @@ func GetCookieName(req *http.Request) string {
 func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	acname := req.FormValue("acname")
 	password := req.FormValue("password")
-	account := Account{Ac_name: acname, Ac_password: password}
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
-	ok := RegisterInsert(&account)
+	ok:=GetUser(acname)
+	if !ok {
+		strBody = []byte("{\"Code\":1,\"Message\":\"user existed\"}")
+		w.Write(strBody)
+		return 
+	}
+
+	account := Account{Ac_name: acname, Ac_password: password}
+	ok = RegisterInsert(&account)
 	if !ok {
 		strBody = []byte("{\"Code\":1,\"Message\":\"insert db faild!!\"}")
 	}
