@@ -8,6 +8,8 @@ import (
 	"github.com/dchest/authcookie"
 	"time"
 	"net/http"
+	"encoding/json"
+	"strings"
 )
 const (
 	//cookie加密、解密使用
@@ -126,6 +128,66 @@ func SetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 	ok := UpdateUserInfo(&UserInfo)
 	if !ok {
 		strBody = []byte("{\"Code\":1,\"Message\":\"save data faild\"}")
+	}
+	w.Write(strBody)
+}
+
+func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
+	acname := req.FormValue("acname")
+	if acname == "" {
+		strBody = []byte("{\"Code\":1,\"Message\":\"user name empty\"}")
+		w.Write(strBody)
+		return
+	}
+
+	UserData,ok := GetUser(acname)
+	if !ok {
+		strBody = []byte("{\"Code\":1,\"Message\":\"user not exist\"}")
+		w.Write(strBody)
+		return
+	}
+
+	req.ParseForm()
+	fmt.Println(req.Form)
+
+	strUser, err := json.Marshal(UserData)
+	if err != nil {
+		strBody = []byte("{\"Code\":1,\"Message\":\"json encode faild\"}")
+	} else {
+		strTemp:="{\"Code\":0,\"Message\":\""+string(strUser)+"\"}"
+		strBody = []byte(strTemp)		
+	}
+	w.Write(strBody)
+}
+
+func GetUserList(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
+	user_list := req.FormValue("user_list")
+	if user_list == "" {
+		strBody = []byte("{\"Code\":1,\"Message\":\"user name list empty\"}")
+		w.Write(strBody)
+		return
+	}
+
+	UserList:=strings.Split(user_list, ",")
+	List := make(map[string]ATUserData)
+	for i := 0; i < len(UserList); i++ {
+		UserData,ok := GetUser(UserList[i])
+		if !ok {
+			strBody = []byte("{\"Code\":1,\"Message\":\"user not exist\"}")
+			w.Write(strBody)
+			return
+		}
+		List[UserList[i]]=*UserData
+	}
+
+	strUser, err := json.Marshal(&List)
+	if err != nil {
+		strBody = []byte("{\"Code\":1,\"Message\":\"json encode faild\"}")
+	} else {
+		strTemp:="{\"Code\":0,\"Message\":\""+string(strUser)+"\"}"
+		strBody = []byte(strTemp)		
 	}
 	w.Write(strBody)
 }
