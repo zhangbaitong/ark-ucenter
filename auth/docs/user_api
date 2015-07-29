@@ -1,0 +1,98 @@
+接口设计
+    请求方式为https,接口返回值为一个JSON串格式如下 
+   {"Code":0,"Message":"ok"}如果接口调用成功不需要返回数据 Message为OK
+    如果有数据的话为一个JSON格式字符串
+1.退出登录：
+  请求地址
+  https://connect.funzhou.cn/user/logout
+  请求方式：GET，POST
+2.用户注册
+  请求地址
+  https://connect.funzhou.cn/user/register
+  请求方式：POST
+  请求参数:
+  acname:用户张号
+  password：用户密码
+   回复消息：
+   成功应答
+  {"Code":0,"Message":"ok"}
+   失败应答
+  {"Code":1,"Message":"user existed"}
+
+2.扩展信息注册
+  请求地址
+  https://connect.funzhou.cn/user/multi_register
+  请求方式：POST
+  请求参数:
+  参数名称 参数值 
+  例如：email gyzly@sina.com
+  回复消息：
+  成功应答
+ {"Code":0,"Message":"ok"}
+  失败应答
+ {"Code":1,"Message":"user existed"}
+2.扩展信息注册
+  请求地址
+  https://connect.funzhou.cn/user/multi_register
+  请求方式：POST
+  请求参数:
+  参数名称 参数值 
+  例如：email gyzly@sina.com
+  回复消息：
+  成功应答
+ {"Code":0,"Message":"ok"}
+  失败应答
+ {"Code":1,"Message":"user existed"}
+3.设置用户信息
+  请求地址
+  https://connect.funzhou.cn/user/set_user_info
+  请求方式：POST
+  请求参数:
+  参数名称 参数值 
+  参数名称 参数值 
+  ... ... 
+  例如：email gyzly@sina.com
+       mobile 18585816540
+       ...
+  回复消息：
+  成功应答
+ {"Code":0,"Message":"ok"}
+  失败应答
+ {"Code":1,"Message":"user not exist"}
+4.扩展信息登录
+  请求地址
+  https://connect.funzhou.cn/user/multi_register
+  请求方式：POST
+  请求参数:
+  参数名称 参数值 
+  例如：email gyzly@sina.com
+  回复消息：
+  成功应答
+ {"Code":0,"Message":"ok"}
+  失败应答
+ {"Code":1,"Message":"user not existed"}
+5.获取单个用户信息
+  请求地址
+  https://connect.funzhou.cn/user/get_user_info
+  请求方式：POST
+  请求参数:
+  acname:用户张号
+  例如：18585816540
+  回复消息：
+  成功应答
+ {"Code":0,"Message":"{"Ac_name":"18585816540","Ac_id":1,"Status":0,"Source":0,"Create_time":1437633428}"}
+  失败应答
+ {"Code":1,"Message":"user not existed"}
+6.获取多个用户信息
+  请求地址
+  https://connect.funzhou.cn/user/get_user_list
+  请求方式：POST
+  请求参数:
+  user_list用户列表
+  例如：user_list 18585816540,zly
+  回复消息：
+  成功应答
+ {"Code":0,"Message":"{"18585816540":{"Ac_name":"18585816540","Ac_id":1,"Status":0,"Source":0,"Create_time":1437633428}}"}
+  失败应答
+ {"Code":1,"Message":"user name list empty"}
+
