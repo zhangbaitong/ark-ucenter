@@ -11,6 +11,9 @@ import (
 type ATUserData struct {
 		Ac_name   string
 		Ac_id   int
+		Status   int
+		Source   int
+		Create_time   int
 }
 
 type ATUserInfo struct {
@@ -52,29 +55,7 @@ func LoginQuery(user *User) bool {
 	}
 	return true
 }
-/*
-func GetAcId(acName string) int {
-	strSQL := fmt.Sprintf("select ac_id from account_tab where ac_name='%s' limit 1", acName)
-	mydb := common.GetDB()
-	if mydb == nil {
-		fmt.Println("get db connection error")
-		return -1
-	}
-	defer common.FreeDB(mydb)
-	rows, err := mydb.Query(strSQL)
-	if err != nil {
-		return -1
-	} else {
-		defer rows.Close()
-		var acid int
-		for rows.Next() {
-			rows.Scan(&acid)
-		}
-		return acid
-	}
-	return -1
-}
-*/
+
 //查询账户是否存在
 func isUserExist_i(name string, value int) (UserInfo* ATUserInfo,ok bool) {
 	session := common.GetSession()
@@ -138,6 +119,30 @@ func UpdateUserInfo(UserInfo* ATUserInfo) (ok bool) {
 		return false
 	}
 	return true
+}
+
+func GetUser(ac_name string) (UserData* ATUserData,ok bool) {
+	UserData=&ATUserData{}
+	strSQL := fmt.Sprintf("select ac_name,ac_id,status,source,create_time from account_tab where ac_name='%s' ", ac_name)
+	mydb := common.GetDB()
+	if mydb == nil {
+		fmt.Println("get db connection error")
+		return UserData,false
+	}
+	defer common.FreeDB(mydb)
+
+	rows, err := mydb.Query(strSQL)
+	if err != nil {
+		return UserData,false
+	} else {
+		defer rows.Close()
+		if rows.Next() {
+			rows.Scan(&UserData.Ac_name,&UserData.Ac_id,&UserData.Status,&UserData.Source,&UserData.Create_time)
+		} else {
+			return UserData,false
+		}
+	}
+	return UserData,true
 }
 
 func LoginById(ac_id int,strPassword string) (strName string,ok bool) {
