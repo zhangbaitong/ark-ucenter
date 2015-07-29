@@ -164,6 +164,7 @@ func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 func GetUserList(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
 	user_list := req.FormValue("user_list")
+	fmt.Println(user_list)
 	if user_list == "" {
 		strBody = []byte("{\"Code\":1,\"Message\":\"user name list empty\"}")
 		w.Write(strBody)
@@ -175,9 +176,7 @@ func GetUserList(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 	for i := 0; i < len(UserList); i++ {
 		UserData,ok := GetUser(UserList[i])
 		if !ok {
-			strBody = []byte("{\"Code\":1,\"Message\":\"user not exist\"}")
-			w.Write(strBody)
-			return
+			continue
 		}
 		List[UserList[i]]=*UserData
 	}
