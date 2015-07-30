@@ -229,7 +229,7 @@ func (oauth *OAuth) Get(w http.ResponseWriter, req *http.Request, ps httprouter.
 	accessData, _ := oauth.Server.Storage.LoadAccess(strToken)
 	fmt.Println(accessData)
 	UserData := accessData.UserData.(map[string]interface{})
-	user_name := UserData["Acname"].(string)
+	user_name := UserData["Ac_name"].(string)
 	acid := GetAcId(user_name)
 	if accessData.Client == nil {
 		fmt.Println("Get Client Faild!!!")
