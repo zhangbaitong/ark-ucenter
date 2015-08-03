@@ -39,7 +39,7 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	password := req.FormValue("password")
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
 	_,ok:=GetUser(acname)
-	if !ok {
+	if ok {
 		strBody = []byte("{\"Code\":1,\"Message\":\"user existed\"}")
 		w.Write(strBody)
 		return 
@@ -155,8 +155,8 @@ func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 		return
 	}
 
-	req.ParseForm()
-	fmt.Println(req.Form)
+	//req.ParseForm()
+	//fmt.Println(req.Form)
 
 	strUser, err := json.Marshal(UserData)
 	if err != nil {
