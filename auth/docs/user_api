@@ -1,12 +1,25 @@
 接口设计
     请求方式为https,接口返回值为一个JSON串格式如下 
    {"Code":0,"Message":"ok"}如果接口调用成功不需要返回数据 Message为OK
+   1:获取数据连接失败;2:数据库错误
     如果有数据的话为一个JSON格式字符串
-1.退出登录：
+1.用户登录：
+  请求地址
+  https://connect.funzhou.cn/user/login
+  请求方式：POST
+  请求参数:
+  acname:用户张号
+  password：用户密码
+   回复消息：
+   成功应答
+  {"Code":0,"Message":"{"Ac_name":"18585816540","Ac_id":1,"Status":0,"Source":0,"Create_time":1437633428}"}
+   失败应答
+  {"Code":3,"Message":"user not exist or password error"}
+2.退出登录：
   请求地址
   https://connect.funzhou.cn/user/logout
   请求方式：GET，POST
-2.用户注册
+3.用户注册
   请求地址
   https://connect.funzhou.cn/user/register
   请求方式：POST
@@ -17,9 +30,9 @@
    成功应答
   {"Code":0,"Message":"ok"}
    失败应答
-  {"Code":1,"Message":"user existed"}
+  {"Code":3,"Message":"user existed"}
 
-2.扩展信息注册
+4.扩展信息注册
   请求地址
   https://connect.funzhou.cn/user/multi_register
   请求方式：POST
@@ -28,22 +41,10 @@
   例如：email gyzly@sina.com
   回复消息：
   成功应答
- {"Code":0,"Message":"ok"}
+ {"Code":0,"Message":"{"id":"55c053f5e1382314be000001"}"}
   失败应答
- {"Code":1,"Message":"user existed"}
-2.扩展信息注册
-  请求地址
-  https://connect.funzhou.cn/user/multi_register
-  请求方式：POST
-  请求参数:
-  参数名称 参数值 
-  例如：email gyzly@sina.com
-  回复消息：
-  成功应答
- {"Code":0,"Message":"ok"}
-  失败应答
- {"Code":1,"Message":"user existed"}
-3.设置用户信息
+ {"Code":3,"Message":"user existed"}
+5.设置用户信息
   请求地址
   https://connect.funzhou.cn/user/set_user_info
   请求方式：POST
@@ -58,10 +59,10 @@
   成功应答
  {"Code":0,"Message":"ok"}
   失败应答
- {"Code":1,"Message":"user not exist"}
-4.扩展信息登录
+ {"Code":4,"Message":"user not exist"}
+6.扩展信息登录
   请求地址
-  https://connect.funzhou.cn/user/multi_register
+  https://connect.funzhou.cn/user/multi_login
   请求方式：POST
   请求参数:
   参数名称 参数值 
@@ -71,7 +72,7 @@
  {"Code":0,"Message":"ok"}
   失败应答
  {"Code":1,"Message":"user not existed"}
-5.获取单个用户信息
+7.获取单个用户信息
   请求地址
   https://connect.funzhou.cn/user/get_user_info
   请求方式：POST
@@ -83,7 +84,7 @@
  {"Code":0,"Message":"{"Ac_name":"18585816540","Ac_id":1,"Status":0,"Source":0,"Create_time":1437633428}"}
   失败应答
  {"Code":1,"Message":"user not existed"}
-6.获取多个用户信息
+8.获取多个用户信息
   请求地址
   https://connect.funzhou.cn/user/get_user_list
   请求方式：POST
