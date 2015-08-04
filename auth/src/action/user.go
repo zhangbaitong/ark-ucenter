@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"github.com/dchest/authcookie"
+	"gopkg.in/mgo.v2/bson" 
 	"time"
 	"net/http"
 	"encoding/json"
@@ -35,39 +36,82 @@ func GetCookieName(req *http.Request) string {
 }
 
 func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	req.ParseForm()
+	reg_type := req.FormValue("reg_type")
+	if reg_type=="1" {
+		strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
+		Info:=make(map[string]string)
+		for k, v := range req.Form {
+			Info[k]=v[0]
+		}
+
+		UserData,code:=MultiRegister(&Info)
+		if code==0 {
+			strUser, err := json.Marshal(UserData)
+			if err != nil {
+				strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",UNKNOWN_ERROR,GetError(UNKNOWN_ERROR)))
+			} else {
+				strTemp:="{\"Code\":0,\"Message\":\""+string(strUser)+"\"}"
+				strBody = []byte(strTemp)	
+			}
+		} else{
+			strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",code,GetError(code)))
+		}
+		w.Write(strBody)
+		return 
+	}
+
 	acname := req.FormValue("acname")
 	password := req.FormValue("password")
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
 	_,ok:=GetUser(acname)
 	if ok {
-		strBody = []byte("{\"Code\":1,\"Message\":\"user existed\"}")
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_EX,GetError(USER_EX)))
 		w.Write(strBody)
 		return 
 	}
 
 	account := Account{Ac_name: acname, Ac_password: password}
+	account.Id=bson.NewObjectId()
 	ok = RegisterInsert(&account)
 	if !ok {
-		strBody = []byte("{\"Code\":1,\"Message\":\"insert db faild!!\"}")
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",INSERT_DB_ERROR,GetError(INSERT_DB_ERROR)))
+		w.Write(strBody)
+		return
 	}
-	w.Write(strBody)
-}
 
-func RegisterMulti(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	req.ParseForm()
-
-	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
+	//save others info
 	Info:=make(map[string]string)
 	for k, v := range req.Form {
+		if k== "acname" || k== "password" {
+			continue
+		}
+
 		Info[k]=v[0]
 	}
 
-	id,code:=MultiRegister(&Info)
-	if code==0 {
-		strBody = []byte(fmt.Sprintf("{\"Code\":0,\"Message\":\"{\"id\":\"%s\"}\"}",id))
-	} else{
-		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",code,id))
+	UserData,_:=GetUser(acname)
+	UserInfo:=ATUserInfo{}
+	UserInfo.Id=account.Id
+	UserInfo.Ac_id=UserData.Ac_id
+	UserInfo.Info=Info
+	InsertUserInfo(&UserInfo)
+
+	InfoAll:=UserInfoAll{}
+	InfoAll.Id              =account.Id.Hex()
+	InfoAll.Ac_name 		=UserData.Ac_name
+	InfoAll.Status		=UserData.Status
+	InfoAll.Source   		=UserData.Source
+	InfoAll.Create_time  =UserData.Create_time
+	InfoAll.Info           =Info
+	strUser, err := json.Marshal(InfoAll)
+	if err != nil {
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",UNKNOWN_ERROR,GetError(UNKNOWN_ERROR)))
+	} else {
+		strTemp:="{\"Code\":0,\"Message\":\""+string(strUser)+"\"}"
+		strBody = []byte(strTemp)		
 	}
+
 	w.Write(strBody)
 }
 
@@ -93,13 +137,25 @@ func LoginCenter(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 	strBody:=[]byte("")
 	if acname == "" || password == "" {
 		strBody = []byte("{\"Code\":1,\"Message\":\"user name or password is not empty\"}")
+		w.Write(strBody)
 	}
 	user := User{Acname: acname, Password: password}
 	ok := LoginQuery(&user)
 	if ok {
 		UserData,_:=GetUser(acname)
+		UserInfo,ok:=GetUserInfoM(UserData.Ac_id)
+		if ok {
+			fmt.Println(UserInfo.Info)
+		}
 		//GenerateCookie(w, req, user.Acname, 1)
-		strUser, err := json.Marshal(UserData)
+		InfoAll:=UserInfoAll{}
+		InfoAll.Id              =UserData.Mid
+		InfoAll.Ac_name 		=UserData.Ac_name
+		InfoAll.Status		=UserData.Status
+		InfoAll.Source   		=UserData.Source
+		InfoAll.Create_time  =UserData.Create_time
+		InfoAll.Info           =UserInfo.Info
+		strUser, err := json.Marshal(InfoAll)
 		if err != nil {
 			strBody = []byte("{\"Code\":1,\"Message\":\"json encode faild\"}")
 		} else {
