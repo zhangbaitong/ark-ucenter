@@ -293,7 +293,6 @@ func MultiRegister(Info* map[string]string) (id string,code int){
 	UserInfo.Ac_id=-1;
 	UserInfo.Info=*Info
 	UserInfo.Id=bson.NewObjectId()
-	fmt.Println(UserInfo)
 	err:=coll.Insert(&UserInfo)
 	if(err!=nil){		
 		return "insert db faild",2
