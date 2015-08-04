@@ -15,10 +15,11 @@ func SayHello(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 func main() {
 	oauth := action.NewOAuth()
 	resource := action.NewResource()
-	//me := action.NewMe()
-
+	action.InitSearchFieldes()
+	
 	router := httprouter.New()
 	router.GET("/", SayHello)
+	router.POST("/", SayHello)
 	router.NotFound = http.FileServer(http.Dir("./static/public")).ServeHTTP
 
 	//Step1：获取Authorization Code
@@ -41,6 +42,7 @@ func main() {
 	router.GET("/res/addResource", resource.AddResource)
 	router.GET("/res/modifyResourceStatus", resource.ModifyResourceStatus)
 
+	router.POST("/user/login", action.LoginCenter)
 	router.GET("/user/logout", action.Logout)
 	router.POST("/user/logout", action.Logout)
 	router.POST("/user/register", action.Register)
@@ -54,6 +56,6 @@ func main() {
 	router.POST("/admin/update_search_fieldes", action.UpdateSearchFieldList)
 
 	fmt.Println("Server is start at ", time.Now().String(), " , on port 443")
-	//log.Fatal(http.ListenAndServeTLS(":443", "./static/pem/servercert.pem", "./static/pem/serverkey.pem", router))
-	log.Fatal(http.ListenAndServe(":8080",  router))
+	log.Fatal(http.ListenAndServeTLS(":443", "./static/pem/servercert.pem", "./static/pem/serverkey.pem", router))
+	//log.Fatal(http.ListenAndServe(":8080",  router))
 }

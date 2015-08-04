@@ -17,7 +17,6 @@ var (
 )
 
 func InitSearchFieldes() (ok bool){
-	fmt.Println("InitSearchFieldes begin")
 	Mu.Lock()
 	defer Mu.Unlock()
 	session := common.GetSession()

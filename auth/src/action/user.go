@@ -57,12 +57,16 @@ func RegisterMulti(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 	req.ParseForm()
 
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
+	Info:=make(map[string]string)
 	for k, v := range req.Form {
-		ok := MultiRegister(k,v[0])
-		if !ok {
-			strBody = []byte("{\"Code\":1,\"Message\":\"insert db faild!!\"}")
-		}
-		break
+		Info[k]=v[0]
+	}
+
+	id,code:=MultiRegister(&Info)
+	if code==0 {
+		strBody = []byte(fmt.Sprintf("{\"Code\":0,\"Message\":\"{\"id\":\"%s\"}\"}",id))
+	} else{
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",code,id))
 	}
 	w.Write(strBody)
 }
@@ -81,6 +85,31 @@ func UserLogin(w http.ResponseWriter, r *http.Request) string {
 		}
 	}
 	return acname
+}
+
+func LoginCenter(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	acname := req.FormValue("acname")
+	password := req.FormValue("password")
+	strBody:=[]byte("")
+	if acname == "" || password == "" {
+		strBody = []byte("{\"Code\":1,\"Message\":\"user name or password is not empty\"}")
+	}
+	user := User{Acname: acname, Password: password}
+	ok := LoginQuery(&user)
+	if ok {
+		UserData,_:=GetUser(acname)
+		//GenerateCookie(w, req, user.Acname, 1)
+		strUser, err := json.Marshal(UserData)
+		if err != nil {
+			strBody = []byte("{\"Code\":1,\"Message\":\"json encode faild\"}")
+		} else {
+			strTemp:="{\"Code\":0,\"Message\":\""+string(strUser)+"\"}"
+			strBody = []byte(strTemp)		
+		}
+	} else {
+		strBody = []byte("{\"Code\":3,\"Message\":\"user not exist or password error\"}")
+	}
+	w.Write(strBody)
 }
 
 func Login(w http.ResponseWriter, req *http.Request) (string, error) {

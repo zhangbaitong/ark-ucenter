@@ -17,6 +17,7 @@ type ATUserData struct {
 }
 
 type ATUserInfo struct {
+      Id bson.ObjectId "_id"
 	Ac_id   int
 	Info map[string] string
 }
@@ -114,7 +115,8 @@ func UpdateUserInfo(UserInfo* ATUserInfo) (ok bool) {
 		return false
 	}
 	
-	err:=coll.Insert(UserInfo)
+	UserInfo.Id=bson.NewObjectId()
+	err:=coll.Insert(UserInfo)	
 	if(err!=nil){		
 		return false
 	}
@@ -214,27 +216,89 @@ func LoginMulti(strName,strPassword string) (strACName string,ok bool) {
 	return "",false
 }
 
-func MultiRegister(strName,strValue string) (ok bool){
+func in_array(str string,strArray []string) (ok bool){
+	for i := 0; i < len(strArray); i++ {
+		if 	strArray[i]==str {
+			return true
+		}
+	}
+	return false
+}
+func isUserExist_m( Info* map[string]string) (UserInfo* ATUserInfo,ok bool) {
+
+	FieldList:=GetSearchFieldes();
+	//condition := make([]bson.M, 0)	
+	var strTemp string
+	nCount:=0
+	for k, _ := range *Info {
+		if in_array(strings.ToLower(k),FieldList) {
+			nCount++;
+		}
+	}
+
+	condition := make([]bson.M, nCount)
+	nCount=0
+	strNode:=""
+	for i := 0; i < len(FieldList); i++ {
+		strTemp=strings.ToLower(FieldList[i])
+		if len((*Info)[strTemp])>0 {			
+			strNode="info."+strTemp
+			condition[nCount]=bson.M{strNode:(*Info)[strTemp]}
+			nCount++
+		}
+	}
+
+	condition_or:=bson.M{"$or":condition}
 	session := common.GetSession()
 	if(session==nil){
-		return false
+		return nil,false
+	}	
+	defer common.FreeSession(session)
+
+	result := ATUserInfo{}
+	coll := session.DB("at_db").C("user_tab")
+	err:=coll.Find(condition_or).Sort("ac_id").One(&result)
+	if err!=nil {
+		return nil,false;
+	}
+
+	return &result,true
+}
+
+func MultiRegister(Info* map[string]string) (id string,code int){
+	session := common.GetSession()
+	if(session==nil){
+		return "get db faild",1
 	}	
 	defer common.FreeSession(session)
 
 	coll := session.DB("at_db").C("user_tab")
-	strNode:="info."+strName
-	_,OK:=isUserExist(strNode,strValue)
+	_,OK:=isUserExist_m(Info)
 	if OK {
-		return true
+		return "user exist",3
+		/*
+		for k, v := range *Info {
+			old_info.Info[k]=v
+		}		
+		fmt.Println(old_info)
+		condition:=bson.M{"_id":old_info.Id}
+		err := coll.Update(condition, bson.M{"$set": bson.M{"info": old_info.Info}})
+		if(err==nil){
+			return old_info.Id.Hex(),true
+		}
+		*/
 	}
+
 	var UserInfo ATUserInfo
 	UserInfo.Ac_id=-1;
-	UserInfo.Info[strName]=strValue
+	UserInfo.Info=*Info
+	UserInfo.Id=bson.NewObjectId()
+	fmt.Println(UserInfo)
 	err:=coll.Insert(&UserInfo)
 	if(err!=nil){		
-		return false
+		return "insert db faild",2
 	}
-	return true
+	return UserInfo.Id.Hex(),0
 }
 
 func RegisterInsert(ac *Account) (ok bool) {
