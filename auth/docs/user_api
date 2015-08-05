@@ -8,8 +8,8 @@
   https://connect.funzhou.cn/user/register
   请求方式：POST
   请求参数:
-  reg_type:
-  acname:用户张号
+  reg_type:这册类型0:普通注册1:泛用户注册;
+  acname:用户帐号
   password：用户密码
    回复消息：
    成功应答
@@ -39,6 +39,7 @@
   https://connect.funzhou.cn/user/set_user_info
   请求方式：POST
   请求参数:
+  id:用户id
   参数名称 参数值 
   参数名称 参数值 
   ... ... 
@@ -55,11 +56,11 @@
   https://connect.funzhou.cn/user/get_user_info
   请求方式：POST
   请求参数:
-  acname:用户张号
-  例如：18585816540
+  id:用户id
+  例如：55c0891de1382334bb000002
   回复消息：
   成功应答
- {"Code":0,"Message":"{"Ac_name":"18585816540","Ac_id":1,"Status":0,"Source":0,"Create_time":1437633428}"}
+ {"Code":0,"Message":"{"Id":"55c0891de1382334bb000002","Ac_name":"18585816540","Status":0,"Source":0,"Create_time":1438681373,"Info":{"email":"gyzly@sina.com"}}"}
   失败应答
  {"Code":1,"Message":"user not existed"}
 6.获取多个用户信息
@@ -68,10 +69,11 @@
   请求方式：POST
   请求参数:
   user_list用户列表
-  例如：user_list 18585816540,zly
+  例如：user_list 55c0891de1382334bb000002,55c1804be13823298d000001
   回复消息：
   成功应答
- {"Code":0,"Message":"{"18585816540":{"Id":"55c0891de1382334bb000002","Ac_name":"18585816541","Status":0,"Source":0,"Create_time":1438681373,"Info":{"email":"gyzly@sina.com"}}}"}
+  {0 {"Id":"55c0891de1382334bb000002","Ac_name":"18585816541","Status":0,"Source":0,"Create_time":1438681373,"Info":{"email":"gyzly@sina.com"}}}
+  {"Code":0,"Message":"{\"Id\":\"55c0891de1382334bb000002\",\"Ac_name\":\"18585816541\",\"Status\":0,\"Source\":0,\"Create_time\":1438681373,\"Info\":{\"email\":\"gyzly@sina.com\"}}"}
   失败应答
  {"Code":6,"Message":"user name list empty"}
 

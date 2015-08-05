@@ -61,16 +61,17 @@ const (
 	USER_NOT_EX
 	USER_EX
 	LIST_EMPTY
+	PARAM_ERROR
 	UNKNOWN_ERROR
 )
 var (
 	error_list=[...]string{"OK","get db connection error","insert db error","update db error",
-	"user not exist or password error","user was existed","list empty","unknown error"}
+	"user not exist or password error","user was existed","list empty","param error","unknown error"}
 )
 
 func GetError(code int) (strMessage string){
 	if code >=len(error_list) {
-		strMessage=""
+		strMessage=error_list[UNKNOWN_ERROR]
 		return
 	}
 
@@ -176,7 +177,7 @@ func UpdateUserInfo(UserInfo* ATUserInfo) (ok bool) {
 	return true
 }
 
-func GetUserInfoM(ac_id int) (UserInfo ATUserInfo,ok bool) {
+func GetUserInfoM(id string) (UserInfo ATUserInfo,ok bool) {
 	session := common.GetSession()
 	if(session==nil){
 		return UserInfo,false
@@ -184,7 +185,8 @@ func GetUserInfoM(ac_id int) (UserInfo ATUserInfo,ok bool) {
 	defer common.FreeSession(session)
 
 	coll := session.DB("at_db").C("user_tab")	
-	err := coll.Find(&bson.M{"ac_id":ac_id}).Sort("ac_id").One(&UserInfo)
+	//err := coll.Find(&bson.M{"ac_id":ac_id}).Sort("ac_id").One(&UserInfo)
+	err:=coll.Find(&bson.M{"_id": bson.ObjectIdHex(id)}).One(&UserInfo)
 	if(err==nil){
 		return UserInfo,true
 	}
@@ -195,6 +197,30 @@ func GetUserInfoM(ac_id int) (UserInfo ATUserInfo,ok bool) {
 func GetUser(ac_name string) (UserData* ATUserData,ok bool) {
 	UserData=&ATUserData{}
 	strSQL := fmt.Sprintf("select ac_name,ac_id,status,source,mid,create_time from account_tab where ac_name='%s' ", ac_name)
+	mydb := common.GetDB()
+	if mydb == nil {
+		fmt.Println("get db connection error")
+		return UserData,false
+	}
+	defer common.FreeDB(mydb)
+
+	rows, err := mydb.Query(strSQL)
+	if err != nil {
+		return UserData,false
+	} else {
+		defer rows.Close()
+		if rows.Next() {
+			rows.Scan(&UserData.Ac_name,&UserData.Ac_id,&UserData.Status,&UserData.Source,&UserData.Mid,&UserData.Create_time)
+		} else {
+			return UserData,false
+		}
+	}
+	return UserData,true
+}
+
+func GetUserById(id string) (UserData* ATUserData,ok bool) {
+	UserData=&ATUserData{}
+	strSQL := fmt.Sprintf("select ac_name,ac_id,status,source,mid,create_time from account_tab where mid='%s' ", id)
 	mydb := common.GetDB()
 	if mydb == nil {
 		fmt.Println("get db connection error")
@@ -344,18 +370,7 @@ func MultiRegister(Info* map[string]string) (InfoResult UserInfoResult,code int)
 	coll := session.DB("at_db").C("user_tab")
 	_,OK:=isUserExist_m(Info)
 	if OK {
-		return InfoResult,3
-		/*
-		for k, v := range *Info {
-			old_info.Info[k]=v
-		}		
-		fmt.Println(old_info)
-		condition:=bson.M{"_id":old_info.Id}
-		err := coll.Update(condition, bson.M{"$set": bson.M{"info": old_info.Info}})
-		if(err==nil){
-			return old_info.Id.Hex(),true
-		}
-		*/
+		return InfoResult,USER_EX
 	}
 
 	var UserInfo ATUserInfo
@@ -366,7 +381,7 @@ func MultiRegister(Info* map[string]string) (InfoResult UserInfoResult,code int)
 	InfoResult.Id=UserInfo.Id.Hex()
 	err:=coll.Insert(&UserInfo)
 	if(err!=nil){		
-		return InfoResult,2
+		return InfoResult,INSERT_DB_ERROR
 	}
 	return InfoResult,0
 }
