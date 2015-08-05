@@ -26,27 +26,15 @@
   password：用户密码
    回复消息：
    成功应答
-  {"Code":0,"Message":"{"Ac_name":"18585816540","Ac_id":1,"Status":0,"Source":0,"Create_time":1437633428}"}
+  {"Code":0,"Message":"{"Id":"55c0891de1382334bb000002","Ac_name":"18585816541","Status":0,"Source":0,"Create_time":1438681373,"Info":{"email":"gyzly@sina.com"}}"}
    失败应答
-  {"Code":3,"Message":"user not exist or password error"}
+  {"Code":4,"Message":"user not exist or password error"}
 3.退出登录：
   请求地址
   https://connect.funzhou.cn/user/logout
   请求方式：GET，POST
 
-4.扩展信息注册
-  请求地址
-  https://connect.funzhou.cn/user/multi_register
-  请求方式：POST
-  请求参数:
-  参数名称 参数值 
-  例如：email gyzly@sina.com
-  回复消息：
-  成功应答
- {"Code":0,"Message":"{"id":"55c053f5e1382314be000001"}"}
-  失败应答
- {"Code":3,"Message":"user existed"}
-5.设置用户信息
+4.设置用户信息
   请求地址
   https://connect.funzhou.cn/user/set_user_info
   请求方式：POST
@@ -62,19 +50,7 @@
  {"Code":0,"Message":"ok"}
   失败应答
  {"Code":4,"Message":"user not exist"}
-6.扩展信息登录
-  请求地址
-  https://connect.funzhou.cn/user/multi_login
-  请求方式：POST
-  请求参数:
-  参数名称 参数值 
-  例如：email gyzly@sina.com
-  回复消息：
-  成功应答
- {"Code":0,"Message":"ok"}
-  失败应答
- {"Code":1,"Message":"user not existed"}
-7.获取单个用户信息
+5.获取单个用户信息
   请求地址
   https://connect.funzhou.cn/user/get_user_info
   请求方式：POST
@@ -86,7 +62,7 @@
  {"Code":0,"Message":"{"Ac_name":"18585816540","Ac_id":1,"Status":0,"Source":0,"Create_time":1437633428}"}
   失败应答
  {"Code":1,"Message":"user not existed"}
-8.获取多个用户信息
+6.获取多个用户信息
   请求地址
   https://connect.funzhou.cn/user/get_user_list
   请求方式：POST
@@ -95,7 +71,7 @@
   例如：user_list 18585816540,zly
   回复消息：
   成功应答
- {"Code":0,"Message":"{"18585816540":{"Ac_name":"18585816540","Ac_id":1,"Status":0,"Source":0,"Create_time":1437633428}}"}
+ {"Code":0,"Message":"{"18585816540":{"Id":"55c0891de1382334bb000002","Ac_name":"18585816541","Status":0,"Source":0,"Create_time":1438681373,"Info":{"email":"gyzly@sina.com"}}}"}
   失败应答
- {"Code":1,"Message":"user name list empty"}
+ {"Code":6,"Message":"user name list empty"}
 
