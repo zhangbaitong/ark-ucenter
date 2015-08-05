@@ -60,10 +60,12 @@ const (
 	UPDATE_DB_ERROR
 	USER_NOT_EX
 	USER_EX
+	LIST_EMPTY
 	UNKNOWN_ERROR
 )
 var (
-	error_list=[...]string{"OK","get db connection error","insert db error","update db error","user not exist or password error","user was existed","unknown error"}
+	error_list=[...]string{"OK","get db connection error","insert db error","update db error",
+	"user not exist or password error","user was existed","list empty","unknown error"}
 )
 
 func GetError(code int) (strMessage string){

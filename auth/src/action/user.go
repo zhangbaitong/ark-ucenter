@@ -143,10 +143,7 @@ func LoginCenter(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 	ok := LoginQuery(&user)
 	if ok {
 		UserData,_:=GetUser(acname)
-		UserInfo,ok:=GetUserInfoM(UserData.Ac_id)
-		if ok {
-			fmt.Println(UserInfo.Info)
-		}
+		UserInfo,_:=GetUserInfoM(UserData.Ac_id)
 		//GenerateCookie(w, req, user.Acname, 1)
 		InfoAll:=UserInfoAll{}
 		InfoAll.Id              =UserData.Mid
@@ -163,7 +160,7 @@ func LoginCenter(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 			strBody = []byte(strTemp)		
 		}
 	} else {
-		strBody = []byte("{\"Code\":3,\"Message\":\"user not exist or password error\"}")
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
 	}
 	w.Write(strBody)
 }
@@ -192,7 +189,8 @@ func Logout(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 //通过openId获取用户资源权限列表
 func SetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
-	acname := GetCookieName(req)
+	acname := req.FormValue("acname")
+	//acname := GetCookieName(req)
 	if acname == "" {
 		strBody = []byte("{\"Code\":1,\"Message\":\"user need login\"}")
 		w.Write(strBody)
@@ -240,16 +238,22 @@ func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 		return
 	}
 
-	//req.ParseForm()
-	//fmt.Println(req.Form)
-
-	strUser, err := json.Marshal(UserData)
+	UserInfo,ok:=GetUserInfoM(UserData.Ac_id)
+	InfoAll:=UserInfoAll{}
+	InfoAll.Id              =UserData.Mid
+	InfoAll.Ac_name 		=UserData.Ac_name
+	InfoAll.Status		=UserData.Status
+	InfoAll.Source   		=UserData.Source
+	InfoAll.Create_time  =UserData.Create_time
+	InfoAll.Info           =UserInfo.Info
+	strUser, err := json.Marshal(InfoAll)
 	if err != nil {
 		strBody = []byte("{\"Code\":1,\"Message\":\"json encode faild\"}")
 	} else {
 		strTemp:="{\"Code\":0,\"Message\":\""+string(strUser)+"\"}"
 		strBody = []byte(strTemp)		
 	}
+
 	w.Write(strBody)
 }
 
@@ -258,19 +262,28 @@ func GetUserList(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 	user_list := req.FormValue("user_list")
 	fmt.Println(user_list)
 	if user_list == "" {
-		strBody = []byte("{\"Code\":1,\"Message\":\"user name list empty\"}")
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",LIST_EMPTY,GetError(LIST_EMPTY)))
 		w.Write(strBody)
 		return
 	}
 
 	UserList:=strings.Split(user_list, ",")
-	List := make(map[string]ATUserData)
+	List := make(map[string]UserInfoAll)
 	for i := 0; i < len(UserList); i++ {
 		UserData,ok := GetUser(UserList[i])
 		if !ok {
 			continue
 		}
-		List[UserList[i]]=*UserData
+
+		UserInfo,ok:=GetUserInfoM(UserData.Ac_id)
+		InfoAll:=UserInfoAll{}
+		InfoAll.Id              =UserData.Mid
+		InfoAll.Ac_name 		=UserData.Ac_name
+		InfoAll.Status		=UserData.Status
+		InfoAll.Source   		=UserData.Source
+		InfoAll.Create_time  =UserData.Create_time
+		InfoAll.Info           =UserInfo.Info
+		List[UserList[i]]=InfoAll
 	}
 
 	strUser, err := json.Marshal(&List)
@@ -282,7 +295,7 @@ func GetUserList(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 	}
 	w.Write(strBody)
 }
-
+/*
 func MultiLogin(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
 	strName := req.FormValue("acname")
@@ -303,3 +316,4 @@ func MultiLogin(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 		return
 	}
 }
+*/

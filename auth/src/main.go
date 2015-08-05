@@ -47,7 +47,6 @@ func main() {
 	router.POST("/user/logout", action.Logout)
 	router.POST("/user/register", action.Register)
 	router.POST("/user/set_user_info", action.SetUserInfo)
-	router.POST("/user/multi_login", action.MultiLogin)
 	router.POST("/user/get_user_info", action.GetUserInfo)
 	router.POST("/user/get_user_list", action.GetUserList)
 
