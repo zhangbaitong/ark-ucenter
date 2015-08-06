@@ -19,6 +19,15 @@ type ATUserInfo struct {
 }
 
 func main() {
+	// "email": "zhw@sina.com",
+	value:=url.Values{"email": {"zhw11@sina.com"}}
+	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/exist",value)
+	if err!=nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(strBody)	
+/*
 	value:=url.Values{"acname": {"gyzly@tom.com"},"password":{"111111"},"email":{"gyzly@tom.com"}}
 	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/register",value)
 	if err!=nil {
@@ -26,7 +35,6 @@ func main() {
 		return
 	}
 	fmt.Println(strBody)	
-/*
 
 	value:=url.Values{"acname": {"zhw"},"password":{"111111"},"email":{"zhw@sina.com"}}
 	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/register",value)

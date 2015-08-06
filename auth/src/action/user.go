@@ -40,6 +40,33 @@ func GetCookieName(req *http.Request) string {
 	return ""
 }
 
+func Exist(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	req.ParseForm()
+	Info:=make(map[string]bool)
+	var ok bool
+	for k, v := range req.Form {
+		if k== "acname" {
+			_,ok=GetUser(v[0])
+		} else {
+			_,ok=isUserExist("info."+strings.ToLower(k),v[0])
+		}
+		Info[k]=ok
+	}
+
+	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
+	strUser, err := json.Marshal(Info)
+	if err != nil {
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",UNKNOWN_ERROR,GetError(UNKNOWN_ERROR)))
+	} else {
+		 var response Response		
+		 response.Code=0
+		 response.Message=string(strUser)
+		 strBody, _ = json.Marshal(response)
+	}
+
+	w.Write(strBody)
+}
+
 func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	req.ParseForm()
 	reg_type := req.FormValue("reg_type")
@@ -321,25 +348,3 @@ func GetUserList(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 	}
 	w.Write(strBody)
 }
-/*
-func MultiLogin(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
-	strName := req.FormValue("acname")
-	strPassword := req.FormValue("password")
-	if strName == "" || strPassword == "" {
-		strBody = []byte("{\"Code\":1,\"Message\":\"password is empty!!\"}")
-		w.Write(strBody)
-		return
-	}
-
-	strACName, _ := LoginMulti(strName, strPassword)
-	if len(strACName) > 0 {
-		GenerateCookie(w, req, strACName, 1)
-		w.Write(strBody)
-		return
-	} else {
-		strBody = []byte("{\"Code\":1,\"Message\":\"password is empty!!\"}")
-		return
-	}
-}
-*/
