@@ -49,6 +49,7 @@ func main() {
 	router.POST("/user/register", action.Register)
 	router.POST("/user/set_user_info", action.SetUserInfo)
 	router.POST("/user/get_user_info", action.GetUserInfo)
+	router.POST("/user/get_user_by_name", action.GetUserInfoByName)
 	router.POST("/user/get_user_list", action.GetUserList)
 
 	router.GET("/admin/get_search_fieldes", action.GetSearchFieldList)

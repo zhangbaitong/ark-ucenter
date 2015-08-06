@@ -79,7 +79,7 @@
  {"Code":1,"Message":"user not existed"}
 7.通过账号获取单个用户信息
   请求地址
-  https://connect.funzhou.cn/user/get_user_info
+  https://connect.funzhou.cn/user/get_user_by_name
   请求方式：POST
   请求参数:
   acname:用户账号
