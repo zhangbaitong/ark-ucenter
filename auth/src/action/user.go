@@ -43,6 +43,7 @@ func GetCookieName(req *http.Request) string {
 func Exist(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	req.ParseForm()
 	Info:=make(map[string]bool)
+	fmt.Println(req.Form)
 	var ok bool
 	for k, v := range req.Form {
 		if k== "acname" {
@@ -69,6 +70,7 @@ func Exist(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 
 func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	req.ParseForm()
+	fmt.Println(req.Form)
 	reg_type := req.FormValue("reg_type")
 	if reg_type=="1" {
 		strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
@@ -86,8 +88,10 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 			if err != nil {
 				strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",UNKNOWN_ERROR,GetError(UNKNOWN_ERROR)))
 			} else {
-				strTemp:="{\"Code\":0,\"Message\":\""+string(strUser)+"\"}"
-				strBody = []byte(strTemp)	
+				 var response Response		
+				 response.Code=0
+				 response.Message=string(strUser)
+				 strBody, _ = json.Marshal(response)
 			}
 		} else{
 			strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",code,GetError(code)))
@@ -95,8 +99,6 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 		w.Write(strBody)
 		return 
 	}
-
-	fmt.Println(req.Form)
 
 	acname := req.FormValue("acname")
 	password := req.FormValue("password")
@@ -281,6 +283,43 @@ func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 	}
 
 	UserData,ok := GetUserById(id)
+	if !ok {
+		strBody := []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
+		w.Write(strBody)
+		return 
+	}
+
+	UserInfo,ok:=GetUserInfoM(UserData.Mid)
+	InfoAll:=UserInfoAll{}
+	InfoAll.Id              =UserData.Mid
+	InfoAll.Ac_name 		=UserData.Ac_name
+	InfoAll.Status		=UserData.Status
+	InfoAll.Source   		=UserData.Source
+	InfoAll.Create_time  =UserData.Create_time
+	InfoAll.Info           =UserInfo.Info
+	strUser, err := json.Marshal(InfoAll)
+	if err != nil {
+		strBody = []byte("{\"Code\":1,\"Message\":\"json encode faild\"}")
+	} else {
+		 var response Response		
+		 response.Code=0
+		 response.Message=string(strUser)
+		 strBody, _ = json.Marshal(response)
+	}
+
+	w.Write(strBody)
+}
+
+func GetUserInfoByName(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
+	acname := req.FormValue("acname")
+	if acname == "" {
+		strBody := []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
+		w.Write(strBody)
+		return 
+	}
+
+	UserData,ok := GetUser(acname)
 	if !ok {
 		strBody := []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
 		w.Write(strBody)
