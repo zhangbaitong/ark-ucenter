@@ -163,7 +163,6 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 
 //登录
 func UserLogin(w http.ResponseWriter, r *http.Request) string {
-	fmt.Println("Login\r\n")
 	acname := GetCookieName(r)
 	if acname == "" {
 		//使用提交的表单登陆
@@ -236,7 +235,6 @@ func Logout(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 
 //通过openId获取用户资源权限列表
 func SetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
 	id := req.FormValue("id")
 	//acname := GetCookieName(req)
@@ -274,6 +272,88 @@ func SetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 }
 
 func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	req.ParseForm()
+	var ok bool
+	var UserData* ATUserData
+	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
+	for k, v := range req.Form {
+		if len(v[0])==0 {
+			strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
+			w.Write(strBody)
+			return 
+		}
+		if k== "acname"||  k=="id" {
+			if k== "acname" {
+				UserData,ok=GetUser(v[0])
+				if !ok {
+					strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
+					w.Write(strBody)
+					return 
+				}
+			} 
+
+			if k=="id" {
+				UserData,ok = GetUserById(v[0])
+				if !ok {
+					strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
+					w.Write(strBody)
+					return 
+				}			
+			}
+
+			UserInfo,_:=GetUserInfoM(UserData.Mid)
+			InfoAll:=UserInfoAll{}
+			InfoAll.Id              =UserData.Mid
+			InfoAll.Ac_name 		=UserData.Ac_name
+			InfoAll.Status		=UserData.Status
+			InfoAll.Source   		=UserData.Source
+			InfoAll.Create_time  =UserData.Create_time
+			InfoAll.Info           =UserInfo.Info
+			strUser, err := json.Marshal(InfoAll)
+			if err != nil {
+				strBody = []byte("{\"Code\":1,\"Message\":\"json encode faild\"}")
+			} else {
+				 var response Response		
+				 response.Code=0
+				 response.Message=string(strUser)
+				 strBody, _ = json.Marshal(response)
+			}
+		} else { 
+			strNode:="info."+strings.ToLower(k)
+			UserInfo,ok:=isUserExist(strNode,v[0])
+			if !ok {
+				strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
+				w.Write(strBody)
+				return 
+			}			
+
+			UserData,ok:=GetUserByAcId(UserInfo.Ac_id)
+			if !ok {
+				strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
+				w.Write(strBody)
+				return 
+			}			
+			InfoAll:=UserInfoAll{}
+			InfoAll.Id              =UserData.Mid
+			InfoAll.Ac_name 		=UserData.Ac_name
+			InfoAll.Status		=UserData.Status
+			InfoAll.Source   		=UserData.Source
+			InfoAll.Create_time  =UserData.Create_time
+			InfoAll.Info           =UserInfo.Info
+			strUser, err := json.Marshal(InfoAll)
+			if err != nil {
+				strBody = []byte("{\"Code\":1,\"Message\":\"json encode faild\"}")
+			} else {
+				 var response Response		
+				 response.Code=0
+				 response.Message=string(strUser)
+				 strBody, _ = json.Marshal(response)
+			}
+		}
+		w.Write(strBody)
+		break
+	}
+/*
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
 	id := req.FormValue("id")
 	if id == "" {
@@ -308,6 +388,7 @@ func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 	}
 
 	w.Write(strBody)
+*/	
 }
 
 func GetUserInfoByName(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {

@@ -70,23 +70,13 @@
   https://connect.funzhou.cn/user/get_user_info
   请求方式：POST
   请求参数:
-  id:用户id
-  例如：55c0891de1382334bb000002
+  参数名称 参数值 
+  id：55c0891de1382334bb000002
+   或者
+  email:gyzly@sina.com
   回复消息：
   成功应答
  {"Code":0,"Message":"{"Id":"55c0891de1382334bb000002","Ac_name":"18585816540","Status":0,"Source":0,"Create_time":1438681373,"Info":{"email":"gyzly@sina.com"}}"}
-  失败应答
- {"Code":1,"Message":"user not existed"}
-7.通过账号获取单个用户信息
-  请求地址
-  https://connect.funzhou.cn/user/get_user_by_name
-  请求方式：POST
-  请求参数:
-  acname:用户账号
-  例如：zhw
-  回复消息：
-  成功应答
-{"Code":0,"Message":"{\"Id\":\"55c1804be13823298d000001\",\"Ac_name\":\"zhw\",\"Status\":0,\"Source\":0,\"Create_time\":1438744651,\"Info\":{\"email\":\"zhw@sina.com\",\"mobile\":\"18585816500\",\"name\":\"张华文\"}}"}
   失败应答
  {"Code":1,"Message":"user not existed"}
 8.获取多个用户信息

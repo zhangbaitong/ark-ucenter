@@ -80,7 +80,14 @@ func GetError(code int) (strMessage string){
 //登录插入
 func LoginQuery(user *User) bool {
 	strSQL := fmt.Sprintf("select count(ac_name) from account_tab where ac_name='%s' and ac_password='%s'", user.Acname, user.Password)
-	rows, err := common.GetDB().Query(strSQL)
+	mydb := common.GetDB()
+	if mydb == nil {
+		fmt.Println("get db connection error3333")
+		return false
+	}
+	defer common.FreeDB(mydb)
+
+	rows, err := mydb.Query(strSQL)
 	if err != nil {
 		return false
 	} else {
@@ -221,6 +228,30 @@ func GetUser(ac_name string) (UserData* ATUserData,ok bool) {
 func GetUserById(id string) (UserData* ATUserData,ok bool) {
 	UserData=&ATUserData{}
 	strSQL := fmt.Sprintf("select ac_name,ac_id,status,source,mid,create_time from account_tab where mid='%s' ", id)
+	mydb := common.GetDB()
+	if mydb == nil {
+		fmt.Println("get db connection error2222")
+		return UserData,false
+	}
+	defer common.FreeDB(mydb)
+
+	rows, err := mydb.Query(strSQL)
+	if err != nil {
+		return UserData,false
+	} else {
+		defer rows.Close()
+		if rows.Next() {
+			rows.Scan(&UserData.Ac_name,&UserData.Ac_id,&UserData.Status,&UserData.Source,&UserData.Mid,&UserData.Create_time)
+		} else {
+			return UserData,false
+		}
+	}
+	return UserData,true
+}
+
+func GetUserByAcId(acid int) (UserData* ATUserData,ok bool) {
+	UserData=&ATUserData{}
+	strSQL := fmt.Sprintf("select ac_name,ac_id,status,source,mid,create_time from account_tab where ac_id=%d ", acid)
 	mydb := common.GetDB()
 	if mydb == nil {
 		fmt.Println("get db connection error2222")
