@@ -199,7 +199,7 @@ func GetUser(ac_name string) (UserData* ATUserData,ok bool) {
 	strSQL := fmt.Sprintf("select ac_name,ac_id,status,source,mid,create_time from account_tab where ac_name='%s' ", ac_name)
 	mydb := common.GetDB()
 	if mydb == nil {
-		fmt.Println("get db connection error")
+		fmt.Println("get db connection error3333")
 		return UserData,false
 	}
 	defer common.FreeDB(mydb)
@@ -223,7 +223,7 @@ func GetUserById(id string) (UserData* ATUserData,ok bool) {
 	strSQL := fmt.Sprintf("select ac_name,ac_id,status,source,mid,create_time from account_tab where mid='%s' ", id)
 	mydb := common.GetDB()
 	if mydb == nil {
-		fmt.Println("get db connection error")
+		fmt.Println("get db connection error2222")
 		return UserData,false
 	}
 	defer common.FreeDB(mydb)
@@ -246,7 +246,7 @@ func LoginById(ac_id int,strPassword string) (strName string,ok bool) {
 	strSQL := fmt.Sprintf("select ac_name from account_tab where ac_id=%d and ac_password='%s'", ac_id,strPassword)
 	mydb := common.GetDB()
 	if mydb == nil {
-		fmt.Println("get db connection error")
+		fmt.Println("get db connection error 1111")
 		return "",false
 	}
 	defer common.FreeDB(mydb)

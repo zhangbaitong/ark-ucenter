@@ -53,6 +53,7 @@ func (this *DbPool) GetConn() (*sql.DB, error) {
         go func() {
             this.Mu.Lock()
             if(this.PoolSize >=this.MaxPoolSize) {
+                this.Mu.Unlock()
                 return
             }
 
@@ -70,6 +71,8 @@ func (this *DbPool) GetConn() (*sql.DB, error) {
     }
 
     //判断是否能在3秒内获取连接，如果不能就报错
+    this.Mu.Lock()
+    defer this.Mu.Unlock()
     select {
     //读取通道里的数据库连接，如果读不到就返回报错
     case connChan, ok := <-this.Conns:
@@ -88,10 +91,13 @@ func (this *DbPool) GetConn() (*sql.DB, error) {
 
 //把连接放入连接池中
 func (this *DbPool) PutConn(conn *sql.DB) {
+    this.Mu.Lock()
+    defer this.Mu.Unlock()
     if this.Conns == nil {
         this.Conns = make(chan *sql.DB, this.MaxPoolSize)
     }
     if len(this.Conns) >= this.MaxPoolSize {
+        fmt.Println("连接数据库失败")
         conn.Close()
         return
     }

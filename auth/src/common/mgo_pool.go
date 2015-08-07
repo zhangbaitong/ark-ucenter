@@ -62,6 +62,8 @@ func (this *MongoPool) GetSession() (*mgo.Session, error) {
         }()
     }
 
+    this.Mu.Lock()
+    defer this.Mu.Unlock()
     //判断是否能在3秒内获取连接，如果不能就报错
     select {
     //读取通道里的数据库连接，如果读不到就返回报错
@@ -75,12 +77,14 @@ func (this *MongoPool) GetSession() (*mgo.Session, error) {
         }
     //如果被阻塞三秒仍没有获取到连接，则就返回错误
     case <-time.After(time.Second * 3):
-        return nil, errors.New("获取数据库连接超时！")
+        return nil, errors.New("获取MongoDB数据库连接超时！")
     }
 }
 
 //把连接放入连接池中
 func (this *MongoPool) PutSession(session *mgo.Session) {
+    this.Mu.Lock()
+    defer this.Mu.Unlock()
     if this.Sessions == nil {
         this.Sessions = make(chan *mgo.Session, this.MaxPoolSize)
     }

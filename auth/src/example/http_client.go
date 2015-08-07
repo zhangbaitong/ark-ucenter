@@ -19,7 +19,7 @@ type ATUserInfo struct {
 }
 
 func main() {
-
+/*
 	value:=url.Values{"acname": {"zhw"}}
 	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/get_user_by_name",value)
 	if err!=nil {
@@ -31,7 +31,6 @@ func main() {
 	fmt.Println(result)	
 	fmt.Println(strBody)	
 
-/*
 	value:=url.Values{"reg_type":{"1"},"company_name": {"infobird"},"job":{"yanfa"},"company_addr":{""},"email":{"wands11@infobird.com"},"mobile":{"1382881522311"}}
 	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/register",value)
 	if err!=nil {
@@ -48,6 +47,7 @@ func main() {
 		return
 	}
 	fmt.Println(strBody)	
+
 	value:=url.Values{"acname": {"gyzly@tom.com"},"password":{"111111"},"email":{"gyzly@tom.com"}}
 	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/register",value)
 	if err!=nil {
@@ -96,8 +96,9 @@ func main() {
 	json.Unmarshal([]byte(strBody),&result)
 	fmt.Println(result)	
 	fmt.Println(strBody)	
+*/
 
-	value:=url.Values{"user_list": {"55c0891de1382334bb000002,55c1804be13823298d000001"}}
+	value:=url.Values{"user_list": {"55c0891de1382334bb000002,55c1804be13823298d000331"}}
 	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/get_user_list",value)
 	if err!=nil {
 		fmt.Println(err)
@@ -106,6 +107,5 @@ func main() {
 	var result Response
 	json.Unmarshal([]byte(strBody),&result)
 	fmt.Println(result)	
-	fmt.Println(strBody)	
-*/
+	//fmt.Println(strBody)	
 }

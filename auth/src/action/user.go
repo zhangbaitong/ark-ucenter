@@ -362,6 +362,7 @@ func GetUserList(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 	for i := 0; i < len(UserList); i++ {
 		UserData,ok := GetUserById(UserList[i])
 		if !ok {
+			List[UserList[i]]=UserInfoAll{}
 			continue
 		}
 
