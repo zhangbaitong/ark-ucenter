@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"encoding/json"
 	"strings"
+	"encoding/hex"
 )
 const (
 	//cookie加密、解密使用
@@ -296,6 +297,14 @@ func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 			} 
 
 			if k=="id" {
+				d, err := hex.DecodeString(v[0])
+				if err != nil || len(d) != 12 {
+					//Invalid input to ObjectIdHex
+					strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
+					w.Write(strBody)
+					return 
+				}
+
 				UserData,ok = GetUserById(v[0])				
 			}
 
