@@ -78,6 +78,10 @@ func (this *DbPool) GetConn() (*sql.DB, error) {
     case connChan, ok := <-this.Conns:
         {
             if ok {
+                err := connChan.Ping()
+                if err != nil {
+                    return nil, errors.New("获取数据库连接断开！")
+                }
                 return connChan, nil
             } else {
                 return nil, errors.New("数据库连接获取异常，可能已经被关闭！")
