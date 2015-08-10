@@ -283,6 +283,8 @@ func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 			return 
 		}
 		if k== "acname"||  k=="id" {
+			var strID string
+			strID=v[0]
 			if k== "acname" {
 				UserData,ok=GetUser(v[0])
 				if !ok {
@@ -290,24 +292,28 @@ func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 					w.Write(strBody)
 					return 
 				}
+				strID=UserData.Mid
 			} 
 
 			if k=="id" {
-				UserData,ok = GetUserById(v[0])
-				if !ok {
-					strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
-					w.Write(strBody)
-					return 
-				}			
+				UserData,ok = GetUserById(v[0])				
 			}
 
-			UserInfo,_:=GetUserInfoM(UserData.Mid)
+			UserInfo,ok2:=GetUserInfoM(strID)
+			if !ok2 {
+				strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
+				w.Write(strBody)
+				return 
+			}
+
 			InfoAll:=UserInfoAll{}
-			InfoAll.Id              =UserData.Mid
-			InfoAll.Ac_name 		=UserData.Ac_name
-			InfoAll.Status		=UserData.Status
-			InfoAll.Source   		=UserData.Source
-			InfoAll.Create_time  =UserData.Create_time
+			if ok {
+				InfoAll.Ac_name 		=UserData.Ac_name
+				InfoAll.Status		=UserData.Status
+				InfoAll.Source   		=UserData.Source
+				InfoAll.Create_time  =UserData.Create_time
+			}
+			InfoAll.Id              =strID
 			InfoAll.Info           =UserInfo.Info
 			strUser, err := json.Marshal(InfoAll)
 			if err != nil {
@@ -320,6 +326,7 @@ func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 			}
 		} else { 
 			strNode:="info."+strings.ToLower(k)
+			fmt.Println(strNode,":",v[0])
 			UserInfo,ok:=isUserExist(strNode,v[0])
 			if !ok {
 				strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
@@ -327,18 +334,21 @@ func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 				return 
 			}			
 
-			UserData,ok:=GetUserByAcId(UserInfo.Ac_id)
-			if !ok {
-				strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
-				w.Write(strBody)
-				return 
-			}			
 			InfoAll:=UserInfoAll{}
-			InfoAll.Id              =UserData.Mid
-			InfoAll.Ac_name 		=UserData.Ac_name
-			InfoAll.Status		=UserData.Status
-			InfoAll.Source   		=UserData.Source
-			InfoAll.Create_time  =UserData.Create_time
+			InfoAll.Id=UserInfo.Id.Hex()
+			if UserInfo.Ac_id>-1 {
+				UserData,ok=GetUserByAcId(UserInfo.Ac_id)
+				if ok {
+					InfoAll.Id              =UserData.Mid
+					InfoAll.Ac_name 		=UserData.Ac_name
+					InfoAll.Status		=UserData.Status
+					InfoAll.Source   		=UserData.Source
+					InfoAll.Create_time  =UserData.Create_time
+				} else {
+				}		
+
+			} 
+
 			InfoAll.Info           =UserInfo.Info
 			strUser, err := json.Marshal(InfoAll)
 			if err != nil {
@@ -353,79 +363,6 @@ func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 		w.Write(strBody)
 		break
 	}
-/*
-	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
-	id := req.FormValue("id")
-	if id == "" {
-		strBody := []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
-		w.Write(strBody)
-		return 
-	}
-
-	UserData,ok := GetUserById(id)
-	if !ok {
-		strBody := []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
-		w.Write(strBody)
-		return 
-	}
-
-	UserInfo,ok:=GetUserInfoM(UserData.Mid)
-	InfoAll:=UserInfoAll{}
-	InfoAll.Id              =UserData.Mid
-	InfoAll.Ac_name 		=UserData.Ac_name
-	InfoAll.Status		=UserData.Status
-	InfoAll.Source   		=UserData.Source
-	InfoAll.Create_time  =UserData.Create_time
-	InfoAll.Info           =UserInfo.Info
-	strUser, err := json.Marshal(InfoAll)
-	if err != nil {
-		strBody = []byte("{\"Code\":1,\"Message\":\"json encode faild\"}")
-	} else {
-		 var response Response		
-		 response.Code=0
-		 response.Message=string(strUser)
-		 strBody, _ = json.Marshal(response)
-	}
-
-	w.Write(strBody)
-*/	
-}
-
-func GetUserInfoByName(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
-	acname := req.FormValue("acname")
-	if acname == "" {
-		strBody := []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
-		w.Write(strBody)
-		return 
-	}
-
-	UserData,ok := GetUser(acname)
-	if !ok {
-		strBody := []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
-		w.Write(strBody)
-		return 
-	}
-
-	UserInfo,ok:=GetUserInfoM(UserData.Mid)
-	InfoAll:=UserInfoAll{}
-	InfoAll.Id              =UserData.Mid
-	InfoAll.Ac_name 		=UserData.Ac_name
-	InfoAll.Status		=UserData.Status
-	InfoAll.Source   		=UserData.Source
-	InfoAll.Create_time  =UserData.Create_time
-	InfoAll.Info           =UserInfo.Info
-	strUser, err := json.Marshal(InfoAll)
-	if err != nil {
-		strBody = []byte("{\"Code\":1,\"Message\":\"json encode faild\"}")
-	} else {
-		 var response Response		
-		 response.Code=0
-		 response.Message=string(strUser)
-		 strBody, _ = json.Marshal(response)
-	}
-
-	w.Write(strBody)
 }
 
 func GetUserList(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {

@@ -191,7 +191,8 @@ func GetUserInfoM(id string) (UserInfo ATUserInfo,ok bool) {
 	}	
 	defer common.FreeSession(session)
 
-	coll := session.DB("at_db").C("user_tab")	
+	coll := session.DB("at_db").C("user_tab")
+	fmt.Println("id=",id)
 	//err := coll.Find(&bson.M{"ac_id":ac_id}).Sort("ac_id").One(&UserInfo)
 	err:=coll.Find(&bson.M{"_id": bson.ObjectIdHex(id)}).One(&UserInfo)
 	if(err==nil){
