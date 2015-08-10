@@ -80,6 +80,7 @@ func (this *DbPool) GetConn() (*sql.DB, error) {
             if ok {
                 err := connChan.Ping()
                 if err != nil {
+                    connChan.Close()
                     return nil, errors.New("获取数据库连接断开！")
                 }
                 return connChan, nil
