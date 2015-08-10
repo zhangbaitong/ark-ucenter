@@ -79,7 +79,7 @@
  {"Code":0,"Message":"{"Id":"55c0891de1382334bb000002","Ac_name":"18585816540","Status":0,"Source":0,"Create_time":1438681373,"Info":{"email":"gyzly@sina.com"}}"}
   失败应答
  {"Code":1,"Message":"user not existed"}
-8.获取多个用户信息
+7.获取多个用户信息
   请求地址
   https://connect.funzhou.cn/user/get_user_list
   请求方式：POST
