@@ -71,7 +71,7 @@ func Exist(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 
 func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	req.ParseForm()
-	//fmt.Println(req.Form)
+	fmt.Println(req.Form)
 	reg_type := req.FormValue("reg_type")
 	if reg_type=="1" {
 		strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
@@ -249,6 +249,14 @@ func SetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 		return 
 	}
 
+	d, err := hex.DecodeString(id)
+	if err != nil || len(d) != 12 {
+		//Invalid input to ObjectIdHex
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
+		w.Write(strBody)
+		return 
+	}
+	
 	//acname:="18585816540"
 	UserData,ok := GetUserById(id)
 	var UserInfo ATUserInfo
