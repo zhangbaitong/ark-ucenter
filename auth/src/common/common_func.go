@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"crypto/md5"
+    "encoding/hex"	
 )
 
 func DisplayJson(obj_json map[string]interface{}) {
@@ -233,4 +235,11 @@ func Invoker(invoke_type int,invoke_dest string,invoke_data interface{})(strBody
 		fmt.Println("is another type not handle yet")
 	}
 	return strBody,err
+}
+
+func MD5(strData string)(strMD5 string){	
+    md5Ctx := md5.New()
+    md5Ctx.Write([]byte(strData))
+    cipherStr := md5Ctx.Sum(nil)
+    return hex.EncodeToString(cipherStr)	
 }
