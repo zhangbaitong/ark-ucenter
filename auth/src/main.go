@@ -1,6 +1,7 @@
 package main
 
 import (
+	"common"
 	"action"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
@@ -10,7 +11,8 @@ import (
 )
 
 func SayHello(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	w.Write([]byte("Hello"))
+	strTemp:=fmt.Sprintf("db_pool MaxPoolSize=%d;PoolSize=%d",common.DBpool.MaxPoolSize,common.DBpool.PoolSize)
+	w.Write([]byte(strTemp))
 }
 func main() {
 	oauth := action.NewOAuth()
@@ -55,6 +57,6 @@ func main() {
 	router.POST("/admin/update_search_fieldes", action.UpdateSearchFieldList)
 
 	fmt.Println("Server is start at ", time.Now().String(), " , on port 443")
-	log.Fatal(http.ListenAndServeTLS(":443", "./static/pem/servercert.pem", "./static/pem/serverkey.pem", router))
-	//log.Fatal(http.ListenAndServe(":8080",  router))
+	//log.Fatal(http.ListenAndServeTLS(":443", "./static/pem/servercert.pem", "./static/pem/serverkey.pem", router))
+	log.Fatal(http.ListenAndServe(":8080",  router))
 }

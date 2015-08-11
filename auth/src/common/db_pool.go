@@ -38,6 +38,7 @@ func CreateDbPool(maxPoolsize int, strDriverName string, strDataSourceName strin
             flag <- true
         }
         dbPool.PoolSize= dbPool.MaxPoolSize/2
+        fmt.Println("dbPool MaxPoolSize=",dbPool.MaxPoolSize,"PoolSize=",dbPool.PoolSize)
         dbPool.Mu.Unlock()
     	}()
 
@@ -60,7 +61,7 @@ func (this *DbPool) GetConn() (*sql.DB, error) {
                 fmt.Println("连接池已满！",":=",this.PoolSize)
                 return 
             }
-            fmt.Println("MaxPoolSize=",this.MaxPoolSize,"PoolSize=",this.PoolSize)
+            fmt.Println("GetConn MaxPoolSize=",this.MaxPoolSize,"PoolSize=",this.PoolSize)
             for i := 0; i < this.MaxPoolSize/2; i++ {
                 conn, err := sql.Open(this.DriverName, this.DataSourceName)
                 if err != nil {
@@ -84,7 +85,9 @@ func (this *DbPool) GetConn() (*sql.DB, error) {
             if ok {
                 err := connChan.Ping()
                 if err != nil {
+                    this.Mu.Lock()
                     this.PoolSize =this.PoolSize -1
+                    this.Mu.Unlock()
                     connChan.Close()
                     return nil, errors.New("获取数据库连接断开！")
                 }

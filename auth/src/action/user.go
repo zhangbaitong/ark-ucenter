@@ -103,6 +103,7 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 
 	acname := req.FormValue("acname")
 	password := req.FormValue("password")
+
 	if acname == ""  || password==""{
 		strBody := []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
 		w.Write(strBody)
@@ -116,6 +117,7 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 		return 
 	}
 
+	password=common.MD5(password)
 	account := Account{Ac_name: acname, Ac_password: password}
 	account.Id=bson.NewObjectId()
 	ok = RegisterInsert(&account)
@@ -185,6 +187,7 @@ func LoginCenter(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 		strBody = []byte("{\"Code\":1,\"Message\":\"user name or password is not empty\"}")
 		w.Write(strBody)
 	}
+	password=common.MD5(password)
 	user := User{Acname: acname, Password: password}
 	ok := LoginQuery(&user)
 	if ok {
@@ -219,6 +222,7 @@ func Login(w http.ResponseWriter, req *http.Request) (string, error) {
 	if acname == "" || password == "" {
 		return "", errors.New("未输入用户名和密码！")
 	}
+	password=common.MD5(password)
 	user := User{Acname: acname, Password: password}
 	ok := LoginQuery(&user)
 	if ok {
