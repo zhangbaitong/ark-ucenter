@@ -24,10 +24,11 @@ type DbPool struct {
 
 func CreateDbPool(maxPoolsize int, strDriverName string, strDataSourceName string,isPrimary bool) *DbPool {
 
-    	dbPool := &DbPool{MaxPoolSize: maxPoolsize, DriverName: strDriverName,
+    	dbPool := &DbPool{MaxPoolSize: maxPoolsize,PoolSize:0,DriverName: strDriverName,
 	DataSourceName:strDataSourceName,IsPrimary: isPrimary}
     	flag := make(chan bool, dbPool.MaxPoolSize/2)
     	go func() {
+        dbPool.Mu.Lock()            
         for i := 0; i < dbPool.MaxPoolSize/2; i++ {
             conn, err := sql.Open(strDriverName, strDataSourceName)
             if err != nil {
@@ -36,12 +37,14 @@ func CreateDbPool(maxPoolsize int, strDriverName string, strDataSourceName strin
             dbPool.PutConn(conn)
             flag <- true
         }
+        dbPool.PoolSize= dbPool.MaxPoolSize/2
+        dbPool.Mu.Unlock()
     	}()
 
     	for i := 0; i < dbPool.MaxPoolSize/2; i++ {
         <-flag
     	}
-     dbPool.PoolSize= dbPool.MaxPoolSize/2
+     //dbPool.PoolSize= dbPool.MaxPoolSize/2
 
     	return dbPool
 }
@@ -54,10 +57,10 @@ func (this *DbPool) GetConn() (*sql.DB, error) {
             this.Mu.Lock()
             if(this.PoolSize >=this.MaxPoolSize) {
                 this.Mu.Unlock()
-                fmt.Println("连接池已满！")
+                fmt.Println("连接池已满！",":=",this.PoolSize)
                 return 
             }
-
+            fmt.Println("MaxPoolSize=",this.MaxPoolSize,"PoolSize=",this.PoolSize)
             for i := 0; i < this.MaxPoolSize/2; i++ {
                 conn, err := sql.Open(this.DriverName, this.DataSourceName)
                 if err != nil {
@@ -72,8 +75,8 @@ func (this *DbPool) GetConn() (*sql.DB, error) {
     }
 
     //判断是否能在3秒内获取连接，如果不能就报错
-    this.Mu.Lock()
-    defer this.Mu.Unlock()
+    //this.Mu.Lock()
+    //defer this.Mu.Unlock()
     select {
     //读取通道里的数据库连接，如果读不到就返回报错
     case connChan, ok := <-this.Conns:
