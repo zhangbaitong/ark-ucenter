@@ -162,26 +162,35 @@ func UpdateUserInfo(UserInfo* ATUserInfo) (ok bool) {
 	}	
 	defer common.FreeSession(session)
 
-	old_info,ok:=isUserExist_i("ac_id",UserInfo.Ac_id)
+	if UserInfo.Ac_id>0 {
+		old_info,ok:=isUserExist_i("ac_id",UserInfo.Ac_id)
+		coll := session.DB("at_db").C("user_tab")	
+		if ok {
+			for k, v := range UserInfo.Info {
+				old_info.Info[k]=v
+			}		
+			condition:=bson.M{"ac_id":UserInfo.Ac_id}
+			err := coll.Update(condition, bson.M{"$set": bson.M{"info": old_info.Info}})
+			if(err==nil){
+				return true
+			}
+		}
+		return false
+	}
+
+	old_info,ok:=GetUserInfoM(UserInfo.Id.Hex())
 	coll := session.DB("at_db").C("user_tab")	
 	if ok {
 		for k, v := range UserInfo.Info {
 			old_info.Info[k]=v
 		}		
-		condition:=bson.M{"ac_id":UserInfo.Ac_id}
+		condition:=&bson.M{"_id": UserInfo.Id}
 		err := coll.Update(condition, bson.M{"$set": bson.M{"info": old_info.Info}})
 		if(err==nil){
 			return true
 		}
-		return false
 	}
-	
-	UserInfo.Id=bson.NewObjectId()
-	err:=coll.Insert(UserInfo)	
-	if(err!=nil){		
-		return false
-	}
-	return true
+	return false	
 }
 
 func GetUserInfoM(id string) (UserInfo ATUserInfo,ok bool) {

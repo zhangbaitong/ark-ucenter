@@ -71,7 +71,7 @@ func Exist(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 
 func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	req.ParseForm()
-	fmt.Println(req.Form)
+	//fmt.Println(req.Form)
 	reg_type := req.FormValue("reg_type")
 	if reg_type=="1" {
 		strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
@@ -117,7 +117,7 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 		return 
 	}
 
-	password=common.MD5(password)
+	//password=common.MD5(password)
 	account := Account{Ac_name: acname, Ac_password: password}
 	account.Id=bson.NewObjectId()
 	ok = RegisterInsert(&account)
@@ -187,7 +187,7 @@ func LoginCenter(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 		strBody = []byte("{\"Code\":1,\"Message\":\"user name or password is not empty\"}")
 		w.Write(strBody)
 	}
-	password=common.MD5(password)
+	//password=common.MD5(password)
 	user := User{Acname: acname, Password: password}
 	ok := LoginQuery(&user)
 	if ok {
@@ -251,10 +251,11 @@ func SetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 
 	//acname:="18585816540"
 	UserData,ok := GetUserById(id)
-	if !ok {
-		strBody := []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
-		w.Write(strBody)
-		return
+	var UserInfo ATUserInfo
+	if ok {
+		UserInfo.Ac_id = UserData.Ac_id
+	} else {
+		UserInfo.Ac_id = -1
 	}
 
 	//var  info map[string]string
@@ -266,9 +267,8 @@ func SetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 		info[k] = v[0]
 	}
 
-	var UserInfo ATUserInfo
-	UserInfo.Ac_id = UserData.Ac_id
 	UserInfo.Info = info
+	UserInfo.Id=bson.ObjectIdHex(id)
 	ok = UpdateUserInfo(&UserInfo)
 	if !ok {
 		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",UPDATE_DB_ERROR,GetError(UPDATE_DB_ERROR)))
