@@ -25,7 +25,7 @@ var (
 func GetDB() (db *sql.DB) {
 	if DBpool == nil {
 		//DBpool = CreateDbPool(5, "mysql", "root:111111@tcp(117.78.19.76:3306)/at_db", true)
-		DBpool = CreateDbPool(20, "mysql", "tomzhao:111111@tcp(127.0.0.1:3306)/at_db", true)
+		DBpool = CreateDbPool(40, "mysql", "tomzhao:111111@tcp(127.0.0.1:3306)/at_db", true)
 	}
 
 	conn, err := DBpool.GetConn()
@@ -34,11 +34,14 @@ func GetDB() (db *sql.DB) {
 		return nil
 	}
 
+
 	return conn
 }
 
 func FreeDB(db *sql.DB) {
+	DBpool.Mu.Lock()
 	DBpool.PutConn(db)
+	DBpool.Mu.Unlock()
 }
 
 func GetDBInfo() (info string) {
@@ -52,7 +55,7 @@ func GetDBInfo() (info string) {
 func GetSession() (Session *mgo.Session) {
 	if MPool == nil {
 		//DBpool = CreateDbPool(20, "mysql", "root:111111@tcp(117.78.19.76:3306)/at_db",true)
-		MPool = CreateMongoPool(20,"127.0.0.1:27017")
+		MPool = CreateMongoPool(40,"127.0.0.1:27017")
 	}
 
 	Session, err := MPool.GetSession()

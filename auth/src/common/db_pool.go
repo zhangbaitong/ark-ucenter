@@ -54,7 +54,8 @@ func (this *DbPool) GetConn() (*sql.DB, error) {
             this.Mu.Lock()
             if(this.PoolSize >=this.MaxPoolSize) {
                 this.Mu.Unlock()
-                return
+                fmt.Println("连接池已满！")
+                return 
             }
 
             for i := 0; i < this.MaxPoolSize/2; i++ {
@@ -64,8 +65,8 @@ func (this *DbPool) GetConn() (*sql.DB, error) {
 				fmt.Println(err)
                 }
                 this.PutConn(conn)
+                this.PoolSize=this.PoolSize+1
             }
-            this.PoolSize=this.MaxPoolSize
             this.Mu.Unlock()
         }()
     }
@@ -97,8 +98,6 @@ func (this *DbPool) GetConn() (*sql.DB, error) {
 
 //把连接放入连接池中
 func (this *DbPool) PutConn(conn *sql.DB) {
-    this.Mu.Lock()
-    defer this.Mu.Unlock()
     if this.Conns == nil {
         this.Conns = make(chan *sql.DB, this.MaxPoolSize)
     }
@@ -107,5 +106,5 @@ func (this *DbPool) PutConn(conn *sql.DB) {
         conn.Close()
         return
     }
-   this.Conns <- conn
+    this.Conns <- conn
 }
