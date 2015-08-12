@@ -73,8 +73,9 @@ func MultiRegister(Info* map[string]string) (InfoResult UserInfoResult,code int)
 	defer common.FreeSession(session)
 
 	coll := session.DB("at_db").C("user_tab")
-	_,OK:=isUserExist_m(Info)
+	User,OK:=isUserExist_m(Info)
 	if OK {
+		InfoResult.Id=User.Id.Hex()
 		return InfoResult,USER_EX
 	}
 
@@ -398,4 +399,3 @@ func isUserExist_m( Info* map[string]string) (UserInfo* ATUserInfo,ok bool) {
 
 	return &result,true
 }
-

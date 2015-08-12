@@ -95,7 +95,11 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 				 strBody, _ = json.Marshal(response)
 			}
 		} else{
-			strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",code,GetError(code)))
+			if code==USER_EX {
+				strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"{\"Id\":\"%s\"}\"}",code,UserData.Id))
+			} else {
+				strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",code,GetError(code)))
+			}
 		}
 		w.Write(strBody)
 		return 
@@ -237,6 +241,9 @@ func Logout(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 
 //通过openId获取用户资源权限列表
 func SetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	req.ParseForm()
+	fmt.Println(req.Form)
+
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
 	id := req.FormValue("id")
 	//acname := GetCookieName(req)
