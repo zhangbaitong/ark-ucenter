@@ -37,19 +37,6 @@ type UserInfoAll struct {
 	Info map[string] string
 }
 
-type Account struct {
-	Acid        int
-	Ac_name     string
-	Ac_password string
-	Status      int
-     Id bson.ObjectId "_id"
-}
-
-type User struct {
-	Acname   string
-	Password string
-}
-
 const (
 	INSERT string = "insert into account_tab (ac_name,ac_password,status,mid,create_time) values (?,?,?,?,unix_timestamp())"
 )
@@ -77,9 +64,65 @@ func GetError(code int) (strMessage string){
 
 	return error_list[code]
 }
+
+func MultiRegister(Info* map[string]string) (InfoResult UserInfoResult,code int){
+	session := common.GetSession()
+	if(session==nil){
+		return InfoResult,1
+	}	
+	defer common.FreeSession(session)
+
+	coll := session.DB("at_db").C("user_tab")
+	_,OK:=isUserExist_m(Info)
+	if OK {
+		return InfoResult,USER_EX
+	}
+
+	var UserInfo ATUserInfo
+	UserInfo.Ac_id=-1;
+	UserInfo.Info=*Info
+	UserInfo.Id=bson.NewObjectId()
+	InfoResult.Info=*Info
+	InfoResult.Id=UserInfo.Id.Hex()
+	err:=coll.Insert(&UserInfo)
+	if(err!=nil){		
+		return InfoResult,INSERT_DB_ERROR
+	}
+	return InfoResult,0
+}
+
+func RegisterInsert(strACName,strPassword,strID string) (ok bool) {
+	mydb := common.GetDB()
+	if mydb == nil {
+		return false
+	}
+	defer common.FreeDB(mydb)
+
+	tx, err := mydb.Begin()
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	stmt, err := tx.Prepare(INSERT)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(strACName, strPassword, 0,strID)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	tx.Commit()
+	return true
+}
+
 //登录插入
-func LoginQuery(user *User) bool {
-	strSQL := fmt.Sprintf("select count(ac_name) from account_tab where ac_name='%s' and ac_password='%s'", user.Acname, user.Password)
+func LoginQuery(strACName,strPassword string) bool {
+	strSQL := fmt.Sprintf("select count(ac_name) from account_tab where ac_name='%s' and ac_password='%s'", strACName,strPassword)
 	mydb := common.GetDB()
 	if mydb == nil {
 		fmt.Println("get db connection error3333")
@@ -306,51 +349,6 @@ func LoginById(ac_id int,strPassword string) (strName string,ok bool) {
 	}
 	return strName,false
 }
-/*
-	ok:=action.LoginMulti("26343637","222222")
-	if ok {
-		fmt.Println("success")
-	} else {
-
-		fmt.Println("faild")
-	}
-	return;
-*/
-func LoginMulti(strName,strPassword string) (strACName string,ok bool) {
-	FieldList:=GetSearchFieldes();
-	condition := make([]bson.M, len(FieldList))
-	var strTemp string
-	for i := 0; i < len(FieldList); i++ {
-		strTemp="info."+strings.ToLower(FieldList[i])
-		condition[i]=bson.M{strTemp:strName}
-	}
-	condition_or:=bson.M{"$or":condition}
-
-	session := common.GetSession()
-	if(session==nil){
-		return "",false
-	}	
-	defer common.FreeSession(session)
-
-	result := []ATUserInfo{}
-	coll := session.DB("at_db").C("user_tab")
-	err:=coll.Find(condition_or).Sort("ac_id").All(&result)
-	if(err!=nil){
-		fmt.Println("faild")
-		return "",false
-	}
-	
-	for _, m := range result {
-		if m.Ac_id==-1{
-			continue
-		}
-		strACName,ok:=LoginById(m.Ac_id,strPassword)
-		if ok {
-			return strACName,true
-		}
-	}
-	return "",false
-}
 
 func in_array(str string,strArray []string) (ok bool){
 	for i := 0; i < len(strArray); i++ {
@@ -401,57 +399,3 @@ func isUserExist_m( Info* map[string]string) (UserInfo* ATUserInfo,ok bool) {
 	return &result,true
 }
 
-func MultiRegister(Info* map[string]string) (InfoResult UserInfoResult,code int){
-	session := common.GetSession()
-	if(session==nil){
-		return InfoResult,1
-	}	
-	defer common.FreeSession(session)
-
-	coll := session.DB("at_db").C("user_tab")
-	_,OK:=isUserExist_m(Info)
-	if OK {
-		return InfoResult,USER_EX
-	}
-
-	var UserInfo ATUserInfo
-	UserInfo.Ac_id=-1;
-	UserInfo.Info=*Info
-	UserInfo.Id=bson.NewObjectId()
-	InfoResult.Info=*Info
-	InfoResult.Id=UserInfo.Id.Hex()
-	err:=coll.Insert(&UserInfo)
-	if(err!=nil){		
-		return InfoResult,INSERT_DB_ERROR
-	}
-	return InfoResult,0
-}
-
-func RegisterInsert(ac *Account) (ok bool) {
-	mydb := common.GetDB()
-	if mydb == nil {
-		return false
-	}
-	defer common.FreeDB(mydb)
-
-	tx, err := mydb.Begin()
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
-
-	stmt, err := tx.Prepare(INSERT)
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(ac.Ac_name, ac.Ac_password, 0,ac.Id.Hex())
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
-	tx.Commit()
-	return true
-}

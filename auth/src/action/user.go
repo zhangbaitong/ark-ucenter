@@ -118,9 +118,8 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	}
 
 	//password=common.MD5(password)
-	account := Account{Ac_name: acname, Ac_password: password}
-	account.Id=bson.NewObjectId()
-	ok = RegisterInsert(&account)
+	Id:=bson.NewObjectId()
+	ok = RegisterInsert(acname,password,Id.Hex())
 	if !ok {
 		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",INSERT_DB_ERROR,GetError(INSERT_DB_ERROR)))
 		w.Write(strBody)
@@ -139,13 +138,13 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 
 	UserData,_:=GetUser(acname)
 	UserInfo:=ATUserInfo{}
-	UserInfo.Id=account.Id
+	UserInfo.Id=Id
 	UserInfo.Ac_id=UserData.Ac_id
 	UserInfo.Info=Info
 	InsertUserInfo(&UserInfo)
 
 	InfoAll:=UserInfoAll{}
-	InfoAll.Id              =account.Id.Hex()
+	InfoAll.Id              =Id.Hex()
 	InfoAll.Ac_name 		=UserData.Ac_name
 	InfoAll.Status		=UserData.Status
 	InfoAll.Source   		=UserData.Source
@@ -188,8 +187,7 @@ func LoginCenter(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 		w.Write(strBody)
 	}
 	//password=common.MD5(password)
-	user := User{Acname: acname, Password: password}
-	ok := LoginQuery(&user)
+	ok := LoginQuery(acname,password)
 	if ok {
 		UserData,_:=GetUser(acname)
 		UserInfo,_:=GetUserInfoM(UserData.Mid)
@@ -223,10 +221,9 @@ func Login(w http.ResponseWriter, req *http.Request) (string, error) {
 		return "", errors.New("未输入用户名和密码！")
 	}
 	password=common.MD5(password)
-	user := User{Acname: acname, Password: password}
-	ok := LoginQuery(&user)
+	ok := LoginQuery(acname,password)
 	if ok {
-		GenerateCookie(w, req, user.Acname, 1)
+		GenerateCookie(w, req, acname, 1)
 		return acname, nil
 	} else {
 		return "", errors.New("用户名或密码错误！")
