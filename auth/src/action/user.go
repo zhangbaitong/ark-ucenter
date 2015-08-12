@@ -96,7 +96,7 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 			}
 		} else{
 			if code==USER_EX {
-				strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"{\"Id\":\"%s\"}\"}",code,UserData.Id))
+				strBody= []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"{\\\"Id\\\":\\\"%s\\\"}\"}",code,UserData.Id))
 			} else {
 				strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",code,GetError(code)))
 			}
