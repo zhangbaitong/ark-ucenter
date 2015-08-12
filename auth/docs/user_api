@@ -15,7 +15,7 @@
    成功应答
   {"Code":0,"Message":"{"Id":"55c0891de1382334bb000002","Ac_name":"18585816541","Status":0,"Source":0,"Create_time":1438681373,"Info":{"email":"gyzly@sina.com"}}"}
    失败应答
-  {"Code":5,"Message":"user existed"}
+   {"Code":5,"Message":"{"Id":"55c0891de1382334bb000002"}"}
 
 2.信息检查
   请求地址
