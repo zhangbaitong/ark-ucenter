@@ -183,10 +183,9 @@ func checkAccessRequest(oauth *OAuth, w http.ResponseWriter, r *http.Request, ar
 	case osin.REFRESH_TOKEN:
 		ar.Authorized = true
 	case osin.PASSWORD:
-		user := User{Acname: ar.Username, Password: ar.Password}
-		ok := LoginQuery(&user)
+		ok := LoginQuery(ar.Username,ar.Password)
 		if ok {
-			GenerateCookie(w, r, user.Acname, 1)
+			GenerateCookie(w, r, ar.Username, 1)
 			ar.Authorized = true
 		} else {
 			//通过redirect_uri 返回错误约定 并跳转到改redirect_uri
