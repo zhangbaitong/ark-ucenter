@@ -20,6 +20,7 @@ type ATUserData struct {
 type ATUserInfo struct {
       Id bson.ObjectId "_id"
 	Ac_id   int
+	Create_time   int
 	Info map[string] string
 }
 
@@ -65,6 +66,28 @@ func GetError(code int) (strMessage string){
 	return error_list[code]
 }
 
+func GetTimeStamp() (TimeStamp int){
+	strSQL := fmt.Sprintf("select unix_timestamp()")
+	mydb := common.GetDB()
+	if mydb == nil {
+		fmt.Println("get db connection error3333")
+		return 0
+	}
+	defer common.FreeDB(mydb)
+
+	rows, err := mydb.Query(strSQL)
+	if err != nil {
+		return 0
+	} else {
+		defer rows.Close()
+		if rows.Next() {
+			rows.Scan(&TimeStamp)
+		}
+	}
+	return TimeStamp
+
+}
+
 func MultiRegister(Info* map[string]string) (InfoResult UserInfoResult,code int){
 	session := common.GetSession()
 	if(session==nil){
@@ -83,6 +106,7 @@ func MultiRegister(Info* map[string]string) (InfoResult UserInfoResult,code int)
 	UserInfo.Ac_id=-1;
 	UserInfo.Info=*Info
 	UserInfo.Id=bson.NewObjectId()
+	UserInfo.Create_time=GetTimeStamp()
 	InfoResult.Info=*Info
 	InfoResult.Id=UserInfo.Id.Hex()
 	err:=coll.Insert(&UserInfo)

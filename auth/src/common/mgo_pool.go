@@ -20,7 +20,7 @@ type MongoPool struct {
 func CreateMongoPool(maxPoolsize int, strServerName string) *MongoPool {
 
         dbPool := &MongoPool{MaxPoolSize: maxPoolsize, ServerName: strServerName}
-        flag := make(chan bool, dbPool.MaxPoolSize/2)
+        flag := make(chan bool, dbPool.MaxPoolSize)
         go func() {
         for i := 0; i < dbPool.MaxPoolSize/2; i++ {
             session, err := mgo.Dial(strServerName)
@@ -62,8 +62,6 @@ func (this *MongoPool) GetSession() (*mgo.Session, error) {
         }()
     }
 
-    this.Mu.Lock()
-    defer this.Mu.Unlock()
     //判断是否能在3秒内获取连接，如果不能就报错
     select {
     //读取通道里的数据库连接，如果读不到就返回报错
@@ -83,8 +81,6 @@ func (this *MongoPool) GetSession() (*mgo.Session, error) {
 
 //把连接放入连接池中
 func (this *MongoPool) PutSession(session *mgo.Session) {
-    this.Mu.Lock()
-    defer this.Mu.Unlock()
     if this.Sessions == nil {
         this.Sessions = make(chan *mgo.Session, this.MaxPoolSize)
     }

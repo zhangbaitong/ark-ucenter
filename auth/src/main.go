@@ -55,13 +55,13 @@ func main() {
 
 	router.GET("/admin/get_search_fieldes", action.GetSearchFieldList)
 	router.POST("/admin/update_search_fieldes", action.UpdateSearchFieldList)
-/*
+
 	go func() {
-		//start https server
+		//start http server
 		fmt.Println("Http Server is start at ", time.Now().String(), " , on port 80")
 		log.Fatal(http.ListenAndServe(":80",  router))
 	}()
-*/		
+		
 	//start https server
 	fmt.Println("Https Server is start at ", time.Now().String(), " , on port 443")
 	log.Fatal(http.ListenAndServeTLS(":443", "./static/pem/servercert.pem", "./static/pem/serverkey.pem", router))

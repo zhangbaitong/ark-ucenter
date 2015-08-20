@@ -183,6 +183,9 @@ func UserLogin(w http.ResponseWriter, r *http.Request) string {
 }
 
 func LoginCenter(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	req.ParseForm()
+	fmt.Println(req.Form)
+
 	acname := req.FormValue("acname")
 	password := req.FormValue("password")
 	strBody:=[]byte("")
