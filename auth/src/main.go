@@ -53,8 +53,8 @@ func main() {
 	router.POST("/user/get_user_info", action.GetUserInfo)
 	router.POST("/user/get_user_list", action.GetUserList)
 
-	router.GET("/admin/get_search_fieldes", action.GetOnlyCheckList)
-	router.POST("/admin/update_search_fieldes", action.UpdateOnlyCheckList)
+	router.GET("/manage/get_only_check_list", action.GetOnlyCheckList)
+	router.POST("/manage/update_only_check_list", action.UpdateOnlyCheckList)
 /*
 	go func() {
 		//start http server
