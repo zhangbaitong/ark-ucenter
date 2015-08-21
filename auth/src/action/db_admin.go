@@ -9,14 +9,16 @@ import (
 )
 
 type Field_List struct {
+	Name string
 	List []string
 }
+
 var (
-	SearchFieldes Field_List
+	OnlyCheckList Field_List
 	Mu  sync.Mutex
 )
 
-func InitSearchFieldes() (ok bool){
+func InitOnlyCheckList() (ok bool){
 	Mu.Lock()
 	defer Mu.Unlock()
 	session := common.GetSession()
@@ -25,8 +27,8 @@ func InitSearchFieldes() (ok bool){
 	}	
 	defer common.FreeSession(session)
 
-	coll := session.DB("at_db").C("search_field_tab")
-	err:=coll.Find(bson.M{}).One(&SearchFieldes)
+	coll := session.DB("at_db").C("dictionary_tab")
+	err:=coll.Find(bson.M{"name": "check_list"}).One(&OnlyCheckList)
 	if err!=nil {
 		return false;
 	}
@@ -34,28 +36,28 @@ func InitSearchFieldes() (ok bool){
 	return true
 }
 
-func GetSearchFieldes() ([]string){
+func GetCheckList() ([]string){
 	Mu.Lock()
 	defer Mu.Unlock()
-	return SearchFieldes.List;
+	return OnlyCheckList.List;
 }
 
-func SetSearchFieldes(Fieldes []string) (ok bool) {	
+func SetOnlyCheckList(Fieldes []string) (ok bool) {	
 	Mu.Lock()
 	defer Mu.Unlock()
-	SearchFieldes.List=Fieldes;	
+	OnlyCheckList.List=Fieldes;	
 	session := common.GetSession()
 	if(session==nil){
 		return false
 	}	
 	defer common.FreeSession(session)
 
-	coll := session.DB("at_db").C("search_field_tab")	
-	List:=Field_List{List:Fieldes}
-	coll.Remove(bson.M{})
-	err:=coll.Insert(List)
+	strName:="check_list"
+	coll := session.DB("at_db").C("dictionary_tab")	
+	coll.Remove(bson.M{"name": strName})
+	err:=coll.Insert(OnlyCheckList)
 	if(err!=nil){		
-		fmt.Println("SetSearchFieldes:",err)
+		fmt.Println("SetOnlyCheckList:",err)
 		return false
 	}
 	return true

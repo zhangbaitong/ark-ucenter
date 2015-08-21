@@ -270,7 +270,6 @@ func GetUserInfoM(id string) (UserInfo ATUserInfo,ok bool) {
 
 	coll := session.DB("at_db").C("user_tab")
 	fmt.Println("id=",id)
-	//err := coll.Find(&bson.M{"ac_id":ac_id}).Sort("ac_id").One(&UserInfo)
 	err:=coll.Find(&bson.M{"_id": bson.ObjectIdHex(id)}).One(&UserInfo)
 	if(err==nil){
 		return UserInfo,true
@@ -385,8 +384,7 @@ func in_array(str string,strArray []string) (ok bool){
 }
 func isUserExist_m( Info* map[string]string) (UserInfo* ATUserInfo,ok bool) {
 
-	FieldList:=GetSearchFieldes();
-	//condition := make([]bson.M, 0)	
+	FieldList:=GetCheckList();
 	var strTemp string
 	nCount:=0
 	for k, _ := range *Info {

@@ -36,7 +36,7 @@
   https://connect.funzhou.cn/user/login
   请求方式：POST
   请求参数:
-  acname:用户张号
+  acname:用户帐号
   password：用户密码
    回复消息：
    成功应答
@@ -88,8 +88,7 @@
   例如：user_list 55c0891de1382334bb000002,55c1804be13823298d000001
   回复消息：
   成功应答
-  {0 {"Id":"55c0891de1382334bb000002","Ac_name":"18585816541","Status":0,"Source":0,"Create_time":1438681373,"Info":{"email":"gyzly@sina.com"}}}
-  {"Code":0,"Message":"{\"Id\":\"55c0891de1382334bb000002\",\"Ac_name\":\"18585816541\",\"Status\":0,\"Source\":0,\"Create_time\":1438681373,\"Info\":{\"email\":\"gyzly@sina.com\"}}"}
+   {"Code":0,"Message":"{\"Id\":\"55c0891de1382334bb000002\",\"Ac_name\":\"18585816541\",\"Status\":0,\"Source\":0,\"Create_time\":1438681373,\"Info\":{\"email\":\"gyzly@sina.com\"}}"}
   失败应答
  {"Code":6,"Message":"user name list empty"}
 

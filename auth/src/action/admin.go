@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"github.com/julienschmidt/httprouter"
 )
-//申请获取授权码
-func GetSearchFieldList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	FieldList:=GetSearchFieldes()
+
+func GetOnlyCheckList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	FieldList:=GetCheckList()
 	strList:=""
 	for i := 0; i < len(FieldList); i++ {
 		if i==0 {
@@ -21,16 +21,15 @@ func GetSearchFieldList(w http.ResponseWriter, r *http.Request, _ httprouter.Par
 	}
 	strMessage:="{\"Code\":0,\"Message\":\""+strList+"\"}"
 	w.Write([]byte(strMessage))
-	return 
 }
 
-func UpdateSearchFieldList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func UpdateOnlyCheckList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	strFieldes := r.FormValue("fieldes")
 	fmt.Println("UpdateSearchFieldList:",strFieldes)
 	FieldList:=strings.Split(strFieldes, ",")
 
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
-	ok := SetSearchFieldes(FieldList)
+	ok := SetOnlyCheckList(FieldList)
 	if !ok {
 		strBody = []byte("{\"Code\":1,\"Message\":\"save data error\"}")
 	}
