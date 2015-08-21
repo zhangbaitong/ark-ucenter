@@ -43,12 +43,40 @@
   {"Code":0,"Message":"{"Id":"55c0891de1382334bb000002","Ac_name":"18585816541","Status":0,"Source":0,"Create_time":1438681373,"Info":{"email":"gyzly@sina.com"}}"}
    失败应答
   {"Code":4,"Message":"user not exist or password error"}
+
 4.退出登录：
   请求地址
   https://connect.funzhou.cn/user/logout
   请求方式：GET，POST
 
-5.设置用户信息
+5.用户密码修改
+  请求地址
+  https://connect.funzhou.cn/user/change_password
+  请求方式：POST
+  请求参数:
+  acname:用户帐号
+  password：用户密码
+  new_password：用户密码
+   回复消息：
+   成功应答
+  {"Code":0,"Message":"ok"}
+   失败应答
+  {"Code":4,"Message":"user not exist or password error"}
+
+6.用户密码重置
+  请求地址
+  https://connect.funzhou.cn/manage/reset_password
+  请求方式：POST
+  请求参数:
+  acname:用户帐号
+  password：用户密码
+   回复消息：
+   成功应答
+  {"Code":0,"Message":"ok"}
+   失败应答
+  {"Code":4,"Message":"user not exist or password error"}
+
+7.设置用户信息
   请求地址
   https://connect.funzhou.cn/user/set_user_info
   请求方式：POST
@@ -65,7 +93,8 @@
  {"Code":0,"Message":"ok"}
   失败应答
  {"Code":4,"Message":"user not exist"}
-6.获取单个用户信息
+
+8.获取单个用户信息
   请求地址
   https://connect.funzhou.cn/user/get_user_info
   请求方式：POST
@@ -79,7 +108,8 @@
  {"Code":0,"Message":"{"Id":"55c0891de1382334bb000002","Ac_name":"18585816540","Status":0,"Source":0,"Create_time":1438681373,"Info":{"email":"gyzly@sina.com"}}"}
   失败应答
  {"Code":1,"Message":"user not existed"}
-7.获取多个用户信息
+
+9.获取多个用户信息
   请求地址
   https://connect.funzhou.cn/user/get_user_list
   请求方式：POST

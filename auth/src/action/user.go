@@ -434,3 +434,52 @@ func GetUserList(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 	}
 	w.Write(strBody)
 }
+
+func ChangePassword(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	req.ParseForm()
+	fmt.Println(req.Form)
+
+	acname := req.FormValue("acname")
+	password := req.FormValue("password")
+	new_password := req.FormValue("new_password")
+	strBody:=[]byte("")
+	if acname == "" || password == "" {
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
+		w.Write(strBody)
+	}
+	//password=common.MD5(password)
+	ok := LoginQuery(acname,password)
+	if ok {
+		ok=UpdatePassword(acname,password,new_password)
+		if ok {
+			strBody = []byte("{\"Code\":0,\"Message\":\"ok\"}")
+		} else {
+			strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",UPDATE_DB_ERROR,GetError(UPDATE_DB_ERROR)))
+		}
+	} else {
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
+	}
+	w.Write(strBody)
+}
+
+func PasswordReset(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	req.ParseForm()
+	fmt.Println(req.Form)
+
+	acname := req.FormValue("acname")
+	password := req.FormValue("password")
+	strBody:=[]byte("")
+	if acname == "" || password == "" {
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
+		w.Write(strBody)
+		return
+	}
+	//password=common.MD5(password)
+	ok := ResetPassword(acname,password)
+	if ok {
+		strBody = []byte("{\"Code\":0,\"Message\":\"ok\"}")
+	} else {
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",UPDATE_DB_ERROR,GetError(UPDATE_DB_ERROR)))
+	}
+	w.Write(strBody)
+}

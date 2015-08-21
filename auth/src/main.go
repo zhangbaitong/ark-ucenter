@@ -49,12 +49,14 @@ func main() {
 	router.POST("/user/logout", action.Logout)
 	router.POST("/user/exist", action.Exist)
 	router.POST("/user/register", action.Register)
+	router.POST("/user/change_password", action.ChangePassword)
 	router.POST("/user/set_user_info", action.SetUserInfo)
 	router.POST("/user/get_user_info", action.GetUserInfo)
 	router.POST("/user/get_user_list", action.GetUserList)
 
 	router.GET("/manage/get_only_check_list", action.GetOnlyCheckList)
 	router.POST("/manage/update_only_check_list", action.UpdateOnlyCheckList)
+	router.POST("/manage/reset_password", action.PasswordReset)
 /*
 	go func() {
 		//start http server
