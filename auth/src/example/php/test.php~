@@ -1,9 +1,0 @@
-<?php
-error_reporting(0); 
-include_once __DIR__ . '/mongodb.php';  
-$mongodb=MongoUtil::init();
-$db_name=$mongodb->select_db("local");
-//$temp=$mongodb->select_collection($db_name,"db_test11");
-$mongodb->save("db_test2222","{'name':'xumingxiang','sex':'man'}")
-//var_dump($temp);
-?>
