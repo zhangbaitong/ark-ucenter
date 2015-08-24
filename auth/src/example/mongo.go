@@ -5,6 +5,7 @@ import (
 	_"strings"
 	"common"
 	"gopkg.in/mgo.v2/bson" 
+	"os/exec"
 )
 type Response struct {
 	Code int
@@ -57,8 +58,31 @@ func  GetDictionary(Name string) {
 	return 
 }
 
+/*
+sh := exec.Command("/bin/echo '"+ SubstrAfter(container.Name,0)+"' >> /etc/dnsmasq.d/dnsmasq.hosts", "service dnsmasq restart")
+out, err := sh.CombinedOutput()
+fmt.Println("out=", string(out), "err=", err)
+if err != nil {
+fmt.Println(err, ":", string(out))
+} 
+*/
 func main() {
+/*	
+	out, err := exec.Command("date").Output()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("The date is %s\n", out)
+*/	
 	//List:=strings.Split("qq,email,mobile,weibo", ",")
 	//InsertDictionary("check_list",List)
-	GetDictionary("check_list")
+	
+	sh := exec.Command("/usr/bin/echo","test",">>","test.dat")
+	out, err := sh.CombinedOutput()
+	fmt.Println("out=", string(out), "err=", err)
+	if err != nil {
+		fmt.Println(err, ":", string(out))
+	} 
+	
+	//GetDictionary("check_list")
 }
