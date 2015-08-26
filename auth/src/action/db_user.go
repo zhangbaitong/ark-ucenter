@@ -387,7 +387,11 @@ func isUserExist_m( Info* map[string]string) (UserInfo* ATUserInfo,ok bool) {
 	FieldList:=GetCheckList();
 	var strTemp string
 	nCount:=0
-	for k, _ := range *Info {
+	for k, v := range *Info {
+		if len(v)==0 {
+			continue
+		}
+		
 		if in_array(strings.ToLower(k),FieldList) {
 			nCount++;
 		}
