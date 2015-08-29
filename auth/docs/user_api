@@ -143,7 +143,7 @@
   verify_code：验证码
    回复消息：
    成功应答
-  {"Code":0,"Message":"ok"}
+  {"Code":0,"Message":"{\"Id\":\"55e154cee1382316d4000001\",\"Ac_name\":\"18585811111\",\"Status\":0,\"Source\":1,\"Create_time\":1440830670,\"Info\":{}}"}
    失败应答
   {"Code":9,"Message":"Check Verify Code faild"}
 
