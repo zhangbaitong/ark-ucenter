@@ -3,10 +3,18 @@ package action
 import (
 	"common"
 	"fmt"
+	"time"
 	"gopkg.in/mgo.v2/bson" 
-	_"encoding/json"
+	"encoding/json"
 	"strings"
+	"github.com/garyburd/redigo/redis"
 )
+
+type VerifyCode struct {
+	Mobile		string
+	Code		int
+	Create_time 	int64
+}
 
 type ATUserData struct {
 		Ac_name   string
@@ -39,7 +47,8 @@ type UserInfoAll struct {
 }
 
 const (
-	INSERT string = "insert into account_tab (ac_name,ac_password,status,mid,create_time) values (?,?,?,?,unix_timestamp())"
+	INSERT string = "insert into account_tab (ac_name,ac_password,status,mid,source,create_time) values (?,?,?,?,?,unix_timestamp())"	
+	ValidTime int64=90	
 )
 const (
 	OK=iota
@@ -50,11 +59,13 @@ const (
 	USER_EX
 	LIST_EMPTY
 	PARAM_ERROR
+	SMS_ERROR
+	CHECK_VERIFY_ERROR
 	UNKNOWN_ERROR
 )
 var (
 	error_list=[...]string{"OK","get db connection error","insert db error","update db error",
-	"user not exist or password error","user was existed","list empty","param error","unknown error"}
+	"user not exist or password error","user was existed","list empty","param error","send sms faild","Check Verify Code faild","unknown error"}
 )
 
 func GetError(code int) (strMessage string){
@@ -88,6 +99,51 @@ func GetTimeStamp() (TimeStamp int){
 
 }
 
+func SaveVerifyCode(mobile string, code int ) bool {
+	conn := common.GetRedisPool().Get()
+	key:="verify_code_"+mobile
+	VerifyInfo:=VerifyCode{Mobile:mobile,Code:code,Create_time:time.Now().Unix()}
+
+	strValue, err := json.Marshal(VerifyInfo)
+	if err != nil {
+		fmt.Println("SaveVerifyCode -  : ", err)
+		return false
+	}
+
+	_, err = conn.Do("set", key, strValue)
+	defer conn.Close()
+	if err != nil {
+		fmt.Println("SaveVerifyCode -  : ", err)
+		return false
+	}
+	return true
+}
+
+func VerifyCodeCheck(mobile string, code int ) bool {
+	conn := common.GetRedisPool().Get()
+	key:="verify_code_"+mobile
+	ret, err := redis.String(conn.Do("get", key))
+	defer conn.Close()
+	if err != nil {
+		fmt.Println("VerifyCodeCheck -  : ", err)
+		return false
+	}
+
+	VerifyInfo:=VerifyCode{}
+	err = json.Unmarshal([]byte(ret), &VerifyInfo)
+	if err != nil {
+		fmt.Println("VerifyCodeCheck -  : ", err)
+		return false
+	}
+
+
+	if VerifyInfo.Create_time+ValidTime>=time.Now().Unix() && VerifyInfo.Code==code {
+		return true
+	}
+
+	return false
+}
+
 func MultiRegister(Info* map[string]string) (InfoResult UserInfoResult,code int){
 	session := common.GetSession()
 	if(session==nil){
@@ -116,7 +172,7 @@ func MultiRegister(Info* map[string]string) (InfoResult UserInfoResult,code int)
 	return InfoResult,0
 }
 
-func RegisterInsert(strACName,strPassword,strID string) (ok bool) {
+func RegisterInsert(strACName,strPassword,strID string,nSource int) (ok bool) {
 	mydb := common.GetDB()
 	if mydb == nil {
 		return false
@@ -136,7 +192,7 @@ func RegisterInsert(strACName,strPassword,strID string) (ok bool) {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(strACName, strPassword, 0,strID)
+	_, err = stmt.Exec(strACName, strPassword, 0,strID,nSource)
 	if err != nil {
 		fmt.Println(err)
 		return false

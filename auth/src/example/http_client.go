@@ -6,6 +6,9 @@ import (
 	"common"
 	"gopkg.in/mgo.v2/bson" 
 	_"encoding/json"
+	_"time"
+	_"math/rand"
+	_"encoding/base64"
 )
 
 type Response struct {
@@ -18,8 +21,52 @@ type ATUserInfo struct {
 	Ac_id   int
 	Info map[string] string
 }
+const (
+SMS string="http://cloudsms.gyinfobird1.funzhou.cn/application/api?data=%s&interface_key=%s&interface_sign=%s"
+)
 
 func main() {
+/*
+	rand.Seed( time.Now().UTC().UnixNano())
+	code:=rand.Int()%1000000
+	//strMessage:=fmt.Sprintf("赵乐跃 VerifyCode:%06d",code)
+	strMessage:=fmt.Sprintf("赵乐跃 VerifyCode:%06d",code)
+	strTnterfaceKey:="ad79bd61-4cc8-f4a4-2811-55e0117e6cc4"
+	strInterfaceSign:="4bf38c7e184df4087910038afc7df8b9b899aa2f"
+	mesaage:=make(map[string]string)
+	mesaage["mobile"]="18585816540"
+	mesaage["msg"]=strMessage
+	strData, err := json.Marshal(mesaage)
+	if err != nil {
+		fmt.Println(err)
+	}
+	strSend:=base64.StdEncoding.EncodeToString(strData)
+	strSendURL:=fmt.Sprintf(SMS,strSend,strTnterfaceKey,strInterfaceSign)
+
+	strResult,err:=common.Invoker(common.HTTP_GET,strSendURL,"")
+	fmt.Println(strSendURL)
+	if err!=nil {
+		fmt.Println(err)
+		return
+	}
+	result:=make(map[string]string)
+	json.Unmarshal([]byte(strResult),&result)
+	if result["result"]=="0" {
+		fmt.Println("Send SMS sucess!!")
+	} else {
+		fmt.Println("Send SMS faild because of ",result["result"])		
+	}
+	fmt.Println(strResult)
+*/
+	strVerifyCode:="306209"
+	value:=url.Values{"mobile": {"18585816540"},"verify_code":{strVerifyCode}}
+	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/get_verify_code",value)
+	//strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/check_verify_code",value)
+	if err!=nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(strBody)	
 /*
 	//value:=url.Values{"acname": {"yanglinkang@qq.com "}}
 	//value:=url.Values{"id": {"55cabc1de1382334ec000006"},"need_send_sms":{"0"}}
@@ -36,7 +83,7 @@ func main() {
 	fmt.Println(result)	
 	fmt.Println(strBody)	
 
-	value:=url.Values{"reg_type":{"1"},"company_name": {"infobird"},"job":{"yanfa"},"company_addr":{""},"email":{"tomtom33@infobird.com"},"mobile":{"1382881522555"}}
+	value:=url.Values{"reg_type":{"1"},"company_name": {"infobird"},"job":{"yanfa"},"company_addr":{""},"email":{""},"mobile":{""}}
 	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/register",value)
 	if err!=nil {
 		fmt.Println(err)
@@ -45,14 +92,14 @@ func main() {
 	fmt.Println(strBody)	
 
 	// "email": "zhw@sina.com",
-	value:=url.Values{"email": {"zhw11@sina.com"}}
+	value:=url.Values{"email": {""}}
 	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/exist",value)
 	if err!=nil {
 		fmt.Println(err)
 		return
 	}
 	fmt.Println(strBody)	
-*/
+
 	password:=common.MD5("333333")
 	new_password:=common.MD5("333333")
 	value:=url.Values{"acname": {"tomzhao44@qq.com "},"password":{password},"new_password":{new_password}}
@@ -64,7 +111,7 @@ func main() {
 		return
 	}
 	fmt.Println(strBody)	
-/*
+
 	value:=url.Values{"acname": {"zhw"},"password":{"111111"},"email":{"zhw@sina.com"}}
 	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/register",value)
 	if err!=nil {

@@ -122,3 +122,28 @@
   失败应答
  {"Code":6,"Message":"user name list empty"}
 
+10.验证码获取：
+  请求地址
+  https://connect.funzhou.cn/user/get_verify_code
+  请求方式：POST
+  请求参数:
+  mobile:手机号码
+   回复消息：
+   成功应答
+  {"Code":0,"Message":"{"verify_code":"839234"}"}
+   失败应答
+  {"Code":8,"Message":"send sms faild  error code 108"}
+
+11.验证码验证：
+  请求地址
+  https://connect.funzhou.cn/user/check_verify_code
+  请求方式：POST
+  请求参数:
+  mobile:手机号码
+  verify_code：验证码
+   回复消息：
+   成功应答
+  {"Code":0,"Message":"ok"}
+   失败应答
+  {"Code":9,"Message":"Check Verify Code faild"}
+

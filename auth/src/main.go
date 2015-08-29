@@ -53,6 +53,8 @@ func main() {
 	router.POST("/user/set_user_info", action.SetUserInfo)
 	router.POST("/user/get_user_info", action.GetUserInfo)
 	router.POST("/user/get_user_list", action.GetUserList)
+	router.POST("/user/get_verify_code", action.GetVerifyCode)
+	router.POST("/user/check_verify_code", action.CheckVerifyCode)
 
 	router.GET("/manage/get_only_check_list", action.GetOnlyCheckList)
 	router.POST("/manage/update_only_check_list", action.UpdateOnlyCheckList)

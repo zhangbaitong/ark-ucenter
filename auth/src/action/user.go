@@ -12,6 +12,9 @@ import (
 	"encoding/json"
 	"strings"
 	"encoding/hex"
+	"encoding/base64"
+	"math/rand"
+	"strconv" 
 )
 const (
 	//cookie加密、解密使用
@@ -19,6 +22,9 @@ const (
 	COOKIENAME string = "MNBVCXZ"
 )
 
+const (
+SMS string="http://cloudsms.gyinfobird1.funzhou.cn/application/api?data=%s&interface_key=%s&interface_sign=%s"
+)
 type Response struct {
 	Code int
 	Message string
@@ -123,7 +129,7 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 
 	//password=common.MD5(password)
 	Id:=bson.NewObjectId()
-	ok = RegisterInsert(acname,password,Id.Hex())
+	ok = RegisterInsert(acname,password,Id.Hex(),0)
 	if !ok {
 		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",INSERT_DB_ERROR,GetError(INSERT_DB_ERROR)))
 		w.Write(strBody)
@@ -164,6 +170,108 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 		 strBody, _ = json.Marshal(response)
 	}
 
+	w.Write(strBody)
+}
+
+func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	req.ParseForm()
+	fmt.Println(req.Form)
+	mobile := req.FormValue("mobile")
+
+	if mobile == "" {
+		strBody := []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
+		w.Write(strBody)
+		return 
+	}
+
+	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
+	_,ok:=GetUser(mobile)
+	if !ok {
+		UserInfo,ok:=isUserExist("mobile",mobile)
+		strID:=""
+		if ok {
+			strID=UserInfo.Id.Hex()
+		} else {
+			Id:=bson.NewObjectId()
+			strID=Id.Hex()
+		}
+		ok = RegisterInsert(mobile,"",strID,1)
+		if !ok {
+			strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",INSERT_DB_ERROR,GetError(INSERT_DB_ERROR)))
+			w.Write(strBody)
+			return
+		}
+	}
+
+	//Build Verify Code
+    rand.Seed( time.Now().UTC().UnixNano())
+    code:=rand.Int()%1000000
+    strMessage:=fmt.Sprintf("贵阳讯鸟 VerifyCode:%06d",code)
+
+    ok=SaveVerifyCode(mobile,code)
+    if !ok {
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",INSERT_DB_ERROR,GetError(INSERT_DB_ERROR)))
+		w.Write(strBody)
+		return    	
+    }
+
+	//send SMS
+	strTnterfaceKey:="ad79bd61-4cc8-f4a4-2811-55e0117e6cc4"
+	strInterfaceSign:="4bf38c7e184df4087910038afc7df8b9b899aa2f"
+	mesaage:=make(map[string]string)
+	mesaage["mobile"]="18585816540"
+	mesaage["msg"]=strMessage
+	strData, err := json.Marshal(mesaage)
+	if err != nil {
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",SMS_ERROR,GetError(SMS_ERROR)))
+		w.Write(strBody)
+		return
+	}
+	strSend:=base64.StdEncoding.EncodeToString(strData)
+	strSendURL:=fmt.Sprintf(SMS,strSend,strTnterfaceKey,strInterfaceSign)
+	strResult,err:=common.Invoker(common.HTTP_GET,strSendURL,"")
+	if err!=nil {
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",SMS_ERROR,GetError(SMS_ERROR)))
+		w.Write(strBody)
+		return
+	}
+
+	result:=make(map[string]string)
+	json.Unmarshal([]byte(strResult),&result)
+
+	if result["result"]=="0" {
+		strBody = []byte(fmt.Sprintf("{\"Code\":0,\"Message\":\"{\"verify_code\":\"%06d\"}\"}",code))
+	} else {
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s  error code %s\"}",SMS_ERROR,GetError(SMS_ERROR),result["result"]))
+	}
+
+	w.Write(strBody)
+}
+
+func CheckVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	req.ParseForm()
+	fmt.Println(req.Form)
+	mobile := req.FormValue("mobile")
+	verify_code := req.FormValue("verify_code")
+
+	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
+	if mobile == "" || verify_code=="" {
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
+		w.Write(strBody)
+		return 
+	}
+
+	code, err := strconv.Atoi(verify_code)
+	if err != nil {
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
+		w.Write(strBody)
+		return 
+	} 
+
+	ok:=VerifyCodeCheck(mobile,code)
+	if !ok {
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",CHECK_VERIFY_ERROR,GetError(CHECK_VERIFY_ERROR)))
+	}
 	w.Write(strBody)
 }
 
