@@ -187,20 +187,27 @@ func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
 	_,ok:=GetUser(mobile)
 	if !ok {
+		var Id bson.ObjectId 
 		UserInfo,ok:=isUserExist("mobile",mobile)
-		strID:=""
 		if ok {
-			strID=UserInfo.Id.Hex()
+			Id=UserInfo.Id
 		} else {
-			Id:=bson.NewObjectId()
-			strID=Id.Hex()
+			Id=bson.NewObjectId()
 		}
-		ok = RegisterInsert(mobile,"",strID,1)
+		ok = RegisterInsert(mobile,"",Id.Hex(),1)
 		if !ok {
 			strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",INSERT_DB_ERROR,GetError(INSERT_DB_ERROR)))
 			w.Write(strBody)
 			return
 		}
+
+		Info:=make(map[string]string)
+		UserData,_:=GetUser(mobile)
+		UserInfo_I:=ATUserInfo{}
+		UserInfo_I.Id=Id
+		UserInfo_I.Ac_id=UserData.Ac_id
+		UserInfo_I.Info=Info
+		InsertUserInfo(&UserInfo_I)
 	}
 
 	//Build Verify Code
@@ -271,7 +278,29 @@ func CheckVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Para
 	ok:=VerifyCodeCheck(mobile,code)
 	if !ok {
 		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",CHECK_VERIFY_ERROR,GetError(CHECK_VERIFY_ERROR)))
+		w.Write(strBody)
+		return 
 	}
+
+	UserData,_:=GetUser(mobile)
+	UserInfo,_:=GetUserInfoM(UserData.Mid)
+	InfoAll:=UserInfoAll{}
+	InfoAll.Id              =UserData.Mid
+	InfoAll.Ac_name 		=UserData.Ac_name
+	InfoAll.Status		=UserData.Status
+	InfoAll.Source   		=UserData.Source
+	InfoAll.Create_time  =UserData.Create_time
+	InfoAll.Info           =UserInfo.Info
+	strUser, err := json.Marshal(InfoAll)
+	if err != nil {
+		strBody = []byte("{\"Code\":1,\"Message\":\"json encode faild\"}")
+	} else {
+		 var response Response		
+		 response.Code=0
+		 response.Message=string(strUser)
+		 strBody, _ = json.Marshal(response)
+	}
+
 	w.Write(strBody)
 }
 
