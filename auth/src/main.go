@@ -59,13 +59,13 @@ func main() {
 	router.GET("/manage/get_only_check_list", action.GetOnlyCheckList)
 	router.POST("/manage/update_only_check_list", action.UpdateOnlyCheckList)
 	router.POST("/manage/reset_password", action.PasswordReset)
-/*
+
 	go func() {
 		//start http server
 		fmt.Println("Http Server is start at ", time.Now().String(), " , on port 80")
 		log.Fatal(http.ListenAndServe(":80",  router))
 	}()
-*/
+
 	//start https server
 	fmt.Println("Https Server is start at ", time.Now().String(), " , on port 443")
 	log.Fatal(http.ListenAndServeTLS(":443", "./static/pem/servercert.pem", "./static/pem/serverkey.pem", router))
