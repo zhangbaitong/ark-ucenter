@@ -213,7 +213,7 @@ func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 	//Build Verify Code
     rand.Seed( time.Now().UTC().UnixNano())
     code:=rand.Int()%1000000
-    strMessage:=fmt.Sprintf("贵阳讯鸟 VerifyCode:%06d",code)
+    strMessage:=fmt.Sprintf("Test VerifyCode:%06d",code)
 
     ok=SaveVerifyCode(mobile,code)
     if !ok {
