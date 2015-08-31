@@ -188,14 +188,14 @@ func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 	_,ok:=GetUser(mobile)
 	if !ok {
 		var Id bson.ObjectId 
-		UserInfo,ok:=isUserExist("mobile",mobile)
+		UserInfo,ok:=isUserExist("info.mobile",mobile)
 		if ok {
 			Id=UserInfo.Id
 		} else {
 			Id=bson.NewObjectId()
 		}
-		ok = RegisterInsert(mobile,"",Id.Hex(),1)
-		if !ok {
+		ok_reg := RegisterInsert(mobile,"",Id.Hex(),1)
+		if !ok_reg {
 			strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",INSERT_DB_ERROR,GetError(INSERT_DB_ERROR)))
 			w.Write(strBody)
 			return
@@ -206,8 +206,17 @@ func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 		UserInfo_I:=ATUserInfo{}
 		UserInfo_I.Id=Id
 		UserInfo_I.Ac_id=UserData.Ac_id
+		Info["mobile"]=mobile
 		UserInfo_I.Info=Info
-		InsertUserInfo(&UserInfo_I)
+
+		if !ok {
+			InsertUserInfo(&UserInfo_I)
+		} else {
+			ok = UpdateUserInfo(&UserInfo_I)
+			if !ok {
+				strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",UPDATE_DB_ERROR,GetError(UPDATE_DB_ERROR)))
+			}
+		}
 	}
 
 	//Build Verify Code
