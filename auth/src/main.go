@@ -4,10 +4,11 @@ import (
 	"common"
 	"action"
 	"fmt"
-	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
 	"time"
+	"github.com/julienschmidt/httprouter"
+	"github.com/dlintw/goconf"
 )
 
 func SayHello(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
@@ -60,13 +61,26 @@ func main() {
 	router.POST("/manage/update_only_check_list", action.UpdateOnlyCheckList)
 	router.POST("/manage/reset_password", action.PasswordReset)
 
+	conf, err := goconf.ReadConfigFile("auth.conf")
+	if err!=nil {
+		fmt.Println(err)
+	}
+	cert,_:=conf.GetString("server", "cert") 
+	key,_:=conf.GetString("server", "key") 
+	https_port,_:=conf.GetInt("server", "https_port") 
+	port,_:=conf.GetInt("server", "port") 
+	ValidTime,_:=conf.GetInt("server", "valid_time") 
+	action.ValidTime=int64(ValidTime)
+
 	go func() {
 		//start http server
 		fmt.Println("Http Server is start at ", time.Now().String(), " , on port 80")
-		log.Fatal(http.ListenAndServe(":80",  router))
+		web_server:=fmt.Sprintf(":%d",port)
+		log.Fatal(http.ListenAndServe(web_server,  router))
 	}()
 
 	//start https server
 	fmt.Println("Https Server is start at ", time.Now().String(), " , on port 443")
-	log.Fatal(http.ListenAndServeTLS(":443", "./static/pem/servercert.pem", "./static/pem/serverkey.pem", router))
+	https_server:=fmt.Sprintf(":%d",https_port)
+	log.Fatal(http.ListenAndServeTLS(https_server, cert, key, router))
 }

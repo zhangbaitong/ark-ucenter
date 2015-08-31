@@ -45,10 +45,9 @@ type UserInfoAll struct {
 	Create_time   int
 	Info map[string] string
 }
-
+var ValidTime int64=90	
 const (
 	INSERT string = "insert into account_tab (ac_name,ac_password,status,mid,source,create_time) values (?,?,?,?,?,unix_timestamp())"	
-	ValidTime int64=90	
 )
 const (
 	OK=iota

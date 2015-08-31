@@ -7,6 +7,7 @@ import (
 	"github.com/garyburd/redigo/redis"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/zhangbaitong/go-uuid/uuid"
+	"github.com/dlintw/goconf"
 	"log"
 	"os"
 	"time"
@@ -23,9 +24,21 @@ var (
 
 //Get db connection from mysql
 func GetDB() (db *sql.DB) {
-	if DBpool == nil {
-		//DBpool = CreateDbPool(5, "mysql", "root:111111@tcp(117.78.19.76:3306)/at_db", true)
-		DBpool = CreateDbPool(20, "mysql", "tomzhao:111111@tcp(127.0.0.1:3306)/at_db", true)
+	if DBpool == nil {		
+		conf, err := goconf.ReadConfigFile("auth.conf")
+		if err!=nil {
+			fmt.Println(err)
+			return nil
+		}
+
+		host,_:=conf.GetString("mysql", "host") 
+		port,_:=conf.GetInt("mysql", "port") 
+		user,_:=conf.GetString("mysql", "user") 
+		password,_:=conf.GetString("mysql", "password") 
+		db,_:=conf.GetString("mysql", "db") 
+		db_server:=fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",user,password,host,port,db)
+
+		DBpool = CreateDbPool(20, "mysql", db_server, true)
 	}
 
 	conn, err := DBpool.GetConn()
@@ -54,8 +67,17 @@ func GetDBInfo() (info string) {
 
 func GetSession() (Session *mgo.Session) {
 	if MPool == nil {
-		//DBpool = CreateDbPool(20, "mysql", "root:111111@tcp(117.78.19.76:3306)/at_db",true)
-		MPool = CreateMongoPool(20,"127.0.0.1:27017")
+		conf, err := goconf.ReadConfigFile("auth.conf")
+		if err!=nil {
+			fmt.Println(err)
+			return nil
+		}
+
+		host,_:=conf.GetString("mongodb", "host") 
+		port,_:=conf.GetInt("mongodb", "port") 
+		mongo_server:=fmt.Sprintf("%s:%d",host,port)
+
+		MPool = CreateMongoPool(20,mongo_server)
 	}
 
 	Session, err := MPool.GetSession()
@@ -91,16 +113,21 @@ func GetRedisPool() *redis.Pool {
 		pool = &redis.Pool{
 			MaxIdle:     3,
 			IdleTimeout: 240 * time.Second,
-			Dial: func() (redis.Conn, error) {
-				//c, err := redis.Dial("tcp", "117.78.19.76:6379")
-				c, err := redis.Dial("tcp", "127.0.0.1:6379")
+			Dial: func() (redis.Conn, error) {				
+				conf, err := goconf.ReadConfigFile("auth.conf")
+				if err!=nil {
+					fmt.Println(err)
+					return nil, err
+				}
+
+				host,_:=conf.GetString("redis", "host") 
+				port,_:=conf.GetInt("redis", "port") 
+				redis_server:=fmt.Sprintf("%s:%d",host,port)
+
+				c, err := redis.Dial("tcp", redis_server)
 				if err != nil {
 					return nil, err
 				}
-				// if _, err := c.Do("AUTH", password); err != nil {
-				//  c.Close()
-				//  return nil, err
-				// }
 				return c, err
 			},
 			TestOnBorrow: func(c redis.Conn, t time.Time) error {
