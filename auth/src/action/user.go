@@ -23,7 +23,7 @@ const (
 )
 
 const (
-SMS string="http://cloudsms.gyinfobird1.funzhou.cn/application/api?data=%s&interface_key=%s&interface_sign=%s"
+SMS string="http://sms.infobird.nvwayun.com/application/api?data=%s&interface_key=%s&interface_sign=%s"
 )
 type Response struct {
 	Code int
@@ -252,6 +252,7 @@ func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 		return
 	}
 
+	fmt.Println(strResult)
 	result:=make(map[string]string)
 	json.Unmarshal([]byte(strResult),&result)
 
