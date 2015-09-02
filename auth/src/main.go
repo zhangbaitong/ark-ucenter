@@ -60,6 +60,7 @@ func main() {
 	router.GET("/manage/get_only_check_list", action.GetOnlyCheckList)
 	router.POST("/manage/update_only_check_list", action.UpdateOnlyCheckList)
 	router.POST("/manage/reset_password", action.PasswordReset)
+	router.POST("/manage/export_data", action.ExportData)
 
 	conf, err := goconf.ReadConfigFile("auth.conf")
 	if err!=nil {

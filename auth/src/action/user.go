@@ -235,7 +235,7 @@ func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 	strTnterfaceKey:="ad79bd61-4cc8-f4a4-2811-55e0117e6cc4"
 	strInterfaceSign:="4bf38c7e184df4087910038afc7df8b9b899aa2f"
 	mesaage:=make(map[string]string)
-	mesaage["mobile"]="18585816540"
+	mesaage["mobile"]=mobile
 	mesaage["msg"]=strMessage
 	strData, err := json.Marshal(mesaage)
 	if err != nil {
@@ -625,6 +625,33 @@ func PasswordReset(w http.ResponseWriter, req *http.Request, ps httprouter.Param
 	ok := ResetPassword(acname,password)
 	if ok {
 		strBody = []byte("{\"Code\":0,\"Message\":\"ok\"}")
+	} else {
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",UPDATE_DB_ERROR,GetError(UPDATE_DB_ERROR)))
+	}
+	w.Write(strBody)
+}
+
+func ExportData(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	req.ParseForm()
+	fmt.Println(req.Form)
+
+	data_type := req.FormValue("data_type")
+	start_time := req.FormValue("start_time")
+	end_time := req.FormValue("end_time")
+	strBody:=[]byte("")
+	if data_type=="" || start_time == "" || end_time == "" {
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
+		w.Write(strBody)
+		return
+	}
+
+	StartTime, _ := strconv.Atoi(start_time)
+	EndTime, _ := strconv.Atoi(end_time)
+
+	//password=common.MD5(password)
+	user_count,ok := ExportMongo(StartTime,EndTime)
+	if ok {
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"user_count=%d\"}",OK,user_count))
 	} else {
 		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",UPDATE_DB_ERROR,GetError(UPDATE_DB_ERROR)))
 	}
