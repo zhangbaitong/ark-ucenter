@@ -15,6 +15,38 @@ func SayHello(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	strTemp:=fmt.Sprintf("db_pool MaxPoolSize=%d;PoolSize=%d",common.DBpool.MaxPoolSize,common.DBpool.PoolSize)
 	w.Write([]byte(strTemp))
 }
+var (
+	cert string
+	key string
+	port int
+	https_port int
+)
+
+func read_conf() {
+	conf, err := goconf.ReadConfigFile("auth.conf")
+	if err!=nil {
+		fmt.Println(err)
+	}
+	cert,_=conf.GetString("server", "cert") 
+	key,_=conf.GetString("server", "key") 
+	https_port,_=conf.GetInt("server", "https_port") 
+	port,_=conf.GetInt("server", "port") 
+	ValidTime,_:=conf.GetInt("sms", "valid_time") 
+	action.ValidTime=int64(ValidTime)
+	RefreshTime,_:=conf.GetInt("sms", "refresh_time") 
+	action.RefreshTime=int64(RefreshTime)
+
+	sms_host,_:=conf.GetString("sms", "host") 
+	action.SMSHost=sms_host
+	str_key,_:=conf.GetString("sms", "key") 
+	action.TnterfaceKey=str_key
+	str_sign,_:=conf.GetString("sms", "sign") 
+	action.InterfaceSign=str_sign
+	check_text,_:=conf.GetString("sms", "check_text") 
+	action.CheckText=check_text	
+
+}
+
 func main() {
 	oauth := action.NewOAuth()
 	resource := action.NewResource()
@@ -62,20 +94,7 @@ func main() {
 	router.POST("/manage/reset_password", action.PasswordReset)
 	router.POST("/manage/export_data", action.ExportData)
 
-	conf, err := goconf.ReadConfigFile("auth.conf")
-	if err!=nil {
-		fmt.Println(err)
-	}
-	cert,_:=conf.GetString("server", "cert") 
-	key,_:=conf.GetString("server", "key") 
-	https_port,_:=conf.GetInt("server", "https_port") 
-	port,_:=conf.GetInt("server", "port") 
-	ValidTime,_:=conf.GetInt("sms", "valid_time") 
-	action.ValidTime=int64(ValidTime)
-	RefreshTime,_:=conf.GetInt("sms", "refresh_time") 
-	action.RefreshTime=int64(RefreshTime)
-	check_text,_:=conf.GetString("sms", "check_text") 
-	action.CheckText=check_text
+	read_conf() 
 	
 	go func() {
 		//start http server

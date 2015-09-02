@@ -15,6 +15,7 @@ import (
 	"encoding/base64"
 	"math/rand"
 	"strconv" 
+	"net/url"
 )
 const (
 	//cookie加密、解密使用
@@ -23,9 +24,15 @@ const (
 )
 
 const (
-SMS string="http://sms.infobird.nvwayun.com/application/api?data=%s&interface_key=%s&interface_sign=%s"
+//SMS string="http://sms.gyjbh.nvwayun.com/application/api?data=%s&interface_key=%s&interface_sign=%s"
+SMS string="http://sms.gyjbh.nvwayun.com/application/api?data=%s&interface_key=%s&interface_sign=%s"
 )
-var CheckText string="%d"
+var (
+	SMSHost string
+	TnterfaceKey string
+	InterfaceSign string
+	CheckText string
+)
 type Response struct {
 	Code int
 	Message string
@@ -174,6 +181,32 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	w.Write(strBody)
 }
 
+func GetSMSUrl(strMobile,strMessage string) string {
+	var Url *url.URL
+	Url, err := url.Parse("http://sms.gyjbh.nvwayun.com")
+	if err != nil {
+		return ""
+	}
+
+	mesaage:=make(map[string]string)
+	mesaage["mobile"]=strMobile
+	mesaage["msg"]=strMessage
+	strData, err := json.Marshal(mesaage)
+	if err != nil {
+		return ""
+	}
+
+	Url.Path += "/application/api"
+	strSend:=base64.StdEncoding.EncodeToString(strData)
+	parameters := url.Values{}
+	parameters.Add("data", strSend)
+	parameters.Add("interface_key", TnterfaceKey)
+	parameters.Add("interface_sign", InterfaceSign)
+	Url.RawQuery = parameters.Encode()
+
+	return Url.String()
+}
+
 func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	req.ParseForm()
 	fmt.Println(req.Form)
@@ -236,19 +269,13 @@ func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params
     fmt.Println(strMessage)
 
 	//send SMS
-	strTnterfaceKey:="ad79bd61-4cc8-f4a4-2811-55e0117e6cc4"
-	strInterfaceSign:="4bf38c7e184df4087910038afc7df8b9b899aa2f"
-	mesaage:=make(map[string]string)
-	mesaage["mobile"]=mobile
-	mesaage["msg"]=strMessage
-	strData, err := json.Marshal(mesaage)
-	if err != nil {
+	strSendURL:=GetSMSUrl(mobile,strMessage)
+	if strSendURL=="" {
 		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",SMS_ERROR,GetError(SMS_ERROR)))
 		w.Write(strBody)
 		return
 	}
-	strSend:=base64.StdEncoding.EncodeToString(strData)
-	strSendURL:=fmt.Sprintf(SMS,strSend,strTnterfaceKey,strInterfaceSign)
+
 	strResult,err:=common.Invoker(common.HTTP_GET,strSendURL,"")
 	if err!=nil {
 		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",SMS_ERROR,GetError(SMS_ERROR)))
