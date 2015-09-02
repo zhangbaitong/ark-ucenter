@@ -45,7 +45,8 @@ type UserInfoAll struct {
 	Create_time   int
 	Info map[string] string
 }
-var ValidTime int64=90	
+var ValidTime int64=300	
+var RefreshTime int64=60
 const (
 	INSERT string = "insert into account_tab (ac_name,ac_password,status,mid,source,create_time) values (?,?,?,?,?,unix_timestamp())"	
 )
@@ -96,6 +97,31 @@ func GetTimeStamp() (TimeStamp int){
 	}
 	return TimeStamp
 
+}
+
+func Get_Verify_Code(mobile string) (code int,ok bool) {
+	conn := common.GetRedisPool().Get()
+	key:="verify_code_"+mobile
+	ret, err := redis.String(conn.Do("get", key))
+	defer conn.Close()
+	if err != nil {
+		fmt.Println("VerifyCodeCheck -  : ", err)
+		return 0,false
+	}
+
+	VerifyInfo:=VerifyCode{}
+	err = json.Unmarshal([]byte(ret), &VerifyInfo)
+	if err != nil {
+		fmt.Println("VerifyCodeCheck -  : ", err)
+		return 0,false
+	}
+
+
+	if VerifyInfo.Create_time+RefreshTime>=time.Now().Unix(){
+		return VerifyInfo.Code,true
+	}
+
+	return 0,false
 }
 
 func SaveVerifyCode(mobile string, code int ) bool {

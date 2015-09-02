@@ -25,6 +25,7 @@ const (
 const (
 SMS string="http://sms.infobird.nvwayun.com/application/api?data=%s&interface_key=%s&interface_sign=%s"
 )
+var CheckText string="%d"
 type Response struct {
 	Code int
 	Message string
@@ -219,17 +220,20 @@ func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 		}
 	}
 
-	//Build Verify Code
-    rand.Seed( time.Now().UTC().UnixNano())
-    code:=rand.Int()%1000000
-    strMessage:=fmt.Sprintf("Test VerifyCode:%06d",code)
-
-    ok=SaveVerifyCode(mobile,code)
-    if !ok {
-		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",INSERT_DB_ERROR,GetError(INSERT_DB_ERROR)))
-		w.Write(strBody)
-		return    	
-    }
+	code,ok:=Get_Verify_Code(mobile)
+	if !ok {
+		//Build Verify Code
+	    rand.Seed( time.Now().UTC().UnixNano())
+	    code=rand.Int()%1000000
+	    ok=SaveVerifyCode(mobile,code)
+	    if !ok {
+			strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",INSERT_DB_ERROR,GetError(INSERT_DB_ERROR)))
+			w.Write(strBody)
+			return    	
+	    }
+	}
+    strMessage:=fmt.Sprintf(CheckText,code)
+    fmt.Println(strMessage)
 
 	//send SMS
 	strTnterfaceKey:="ad79bd61-4cc8-f4a4-2811-55e0117e6cc4"

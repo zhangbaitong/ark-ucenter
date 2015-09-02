@@ -70,9 +70,13 @@ func main() {
 	key,_:=conf.GetString("server", "key") 
 	https_port,_:=conf.GetInt("server", "https_port") 
 	port,_:=conf.GetInt("server", "port") 
-	ValidTime,_:=conf.GetInt("server", "valid_time") 
+	ValidTime,_:=conf.GetInt("sms", "valid_time") 
 	action.ValidTime=int64(ValidTime)
-
+	RefreshTime,_:=conf.GetInt("sms", "refresh_time") 
+	action.RefreshTime=int64(RefreshTime)
+	check_text,_:=conf.GetString("sms", "check_text") 
+	action.CheckText=check_text
+	
 	go func() {
 		//start http server
 		fmt.Println("Http Server is start at ", time.Now().String(), " , on port 80")
