@@ -128,9 +128,10 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 		return 
 	}
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
-	_,ok:=GetUser(acname)
+	UserData,ok:=GetUser(acname)
 	if ok {
-		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_EX,GetError(USER_EX)))
+		strBody= []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"{\\\"Id\\\":\\\"%s\\\"}\"}",USER_EX,UserData.Mid))
+		//strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_EX,GetError(USER_EX)))
 		w.Write(strBody)
 		return 
 	}
@@ -154,7 +155,7 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 		Info[k]=v[0]
 	}
 
-	UserData,_:=GetUser(acname)
+	UserData,_=GetUser(acname)
 	UserInfo:=ATUserInfo{}
 	UserInfo.Id=Id
 	UserInfo.Ac_id=UserData.Ac_id
