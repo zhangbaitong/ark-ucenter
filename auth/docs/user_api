@@ -147,3 +147,15 @@
    失败应答
   {"Code":9,"Message":"Check Verify Code faild"}
 
+常用字典表
+name
+male
+age
+mobile
+qq
+email
+weibo
+company_name
+company_addr
+job
+openid
