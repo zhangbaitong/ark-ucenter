@@ -18,6 +18,35 @@ var (
 	Mu  sync.Mutex
 )
 
+func DeleteUser(nACID int) (ok bool) {
+	mydb := common.GetDB()
+	if mydb == nil {
+		return false
+	}
+	defer common.FreeDB(mydb)
+
+	tx, err := mydb.Begin()
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	stmt, err := tx.Prepare("delete from account_tab where ac_id=?")
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(nACID)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	tx.Commit()
+	return true
+}
+
 func InitOnlyCheckList() (ok bool){
 	Mu.Lock()
 	defer Mu.Unlock()
@@ -69,21 +98,36 @@ func ExportMongo( start_time,end_time int) (count int,ok bool) {
 		return 0,false
 	}	
 	defer common.FreeSession(session)
-	return 0,false
-/*
+
 	result := []ATUserInfo{}
 	coll := session.DB("at_db").C("user_tab")
-	err:=coll.Find(&bson.M{"phone": "{$exists": "true"}}).Sort("create_time").All(&result)
-	//err:=coll.Find(&bson.M{"create_time":bson.M{"$gte":start_time,"$lte":end_time}}).Sort("create_time").All(&result)
+	//conditions := bson.M{"phone": bson.M{"$exist": 1}}
+	conditions :=bson.M{"info.phone": bson.M{"$exists": true}}
+	err:=coll.Find(conditions).Sort("create_time").All(&result)
 	if err!=nil {
 		fmt.Println(err)
 		return 0,false;
 	}
 
 	for i := 0; i < len(result); i++ {
-		fmt.Println(result[i])
-	}
+		//delete from mongodb
+		conditions :=bson.M{"info.phone":result[i].Info["phone"]}
+		err = coll.Remove(conditions)
+		if err!=nil {
+			fmt.Println(err)
+			return 0,false;
+		}
 
+		//delete from mysql
+		if result[i].Ac_id>0 {
+			DeleteUser(result[i].Ac_id)
+		}
+
+		fmt.Println(result[i].Id.Hex())
+		fmt.Println(result[i].Info["phone"])
+	}
+	return len(result),true
+/*
 	//err:=coll.Find(&bson.M{"create_time":{"$gte":start_time,"$lte":end_time}}).Sort("create_time").All(&result)
 	//err:=coll.Find(&bson.M{"create_time":bson.M{"$gte":start_time,"$lte":end_time}}).Sort("create_time").All(&result)
 	condition := make([]bson.M, 6)
