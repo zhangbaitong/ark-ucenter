@@ -159,6 +159,7 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	UserInfo:=ATUserInfo{}
 	UserInfo.Id=Id
 	UserInfo.Ac_id=UserData.Ac_id
+	UserInfo.Create_time=UserData.Create_time
 	UserInfo.Info=Info
 	InsertUserInfo(&UserInfo)
 
