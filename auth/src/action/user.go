@@ -242,6 +242,7 @@ func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 		UserInfo_I:=ATUserInfo{}
 		UserInfo_I.Id=Id
 		UserInfo_I.Ac_id=UserData.Ac_id
+		UserInfo_I.Create_time=UserData.Create_time
 		Info["mobile"]=mobile
 		UserInfo_I.Info=Info
 
@@ -476,6 +477,7 @@ func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 	var ok bool
 	var UserData* ATUserData
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
+	start:=time.Now().UTC().UnixNano()
 	for k, v := range req.Form {
 		if len(v[0])==0 {
 			strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
@@ -569,6 +571,8 @@ func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 			}
 		}
 		w.Write(strBody)
+		end:=time.Now().UTC().UnixNano()
+		fmt.Println("used time ",(end-start)/1000)
 		break
 	}
 }
