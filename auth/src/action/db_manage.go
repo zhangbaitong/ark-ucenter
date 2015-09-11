@@ -170,7 +170,7 @@ func RegUserStat(start_time,end_time ,source int ) (count int,ok bool) {
 	defer common.FreeDB(mydb)
 
 	strSQL := fmt.Sprintf("select count(ac_id) from account_tab where create_time>%d and create_time<=%d and  source=%d", start_time,end_time,source)
-	fmt.Println(strSQL)
+	rows, err := mydb.Query(strSQL)
 	if err != nil {
 		return 0,false
 	} else {
