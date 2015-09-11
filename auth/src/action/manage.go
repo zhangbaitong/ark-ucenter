@@ -86,3 +86,25 @@ func ExportData(w http.ResponseWriter, req *http.Request, ps httprouter.Params) 
 	}
 	w.Write(strBody)
 }
+
+func UserStat(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	req.ParseForm()
+	fmt.Println(req.Form)
+
+	start_time := req.FormValue("start_time")
+	end_time := req.FormValue("end_time")
+	strBody:=[]byte("")
+	if start_time == "" || end_time == "" {
+		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
+		w.Write(strBody)
+		return
+	}
+
+	StartTime, _ := strconv.Atoi(start_time)
+	EndTime, _ := strconv.Atoi(end_time)
+	
+	reg_bat,_:=RegUserStat(StartTime,EndTime,0)
+	reg_mobile,_:=RegUserStat(StartTime,EndTime,1)
+	strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"reg_bat=%d;reg_mobile=%d\"}",OK,reg_bat,reg_mobile))
+	w.Write(strBody)
+}

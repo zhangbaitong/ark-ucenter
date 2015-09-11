@@ -124,24 +124,24 @@ func main() {
 	}
 	fmt.Println(strBody)	
 
-	value:=url.Values{"acname": {"123123123"},"password":{"111111"}}
+	value:=url.Values{"acname": {"22222111111"},"password":{"111111"},"mobile":{"22222111111"}}
 	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/register",value)
 	if err!=nil {
 		fmt.Println(err)
 		return
 	}
 	fmt.Println(strBody)	
-*/
+
 
 	value:=url.Values{"fieldes": {"qq,email,mobile,weibo,openid"}}
-	//strBody,err:=common.Invoker(common.HTTP_GET,"https://connect.funzhou.cn/manage/only_check_list",value)
-	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/manage/update_only_check_list",value)
+	strBody,err:=common.Invoker(common.HTTP_GET,"https://connect.funzhou.cn/manage/get_only_check_list",value)
+	//strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/manage/update_only_check_list",value)
 	if err!=nil {
 		fmt.Println(err)
 		return
 	}
 	fmt.Println(strBody)	
-/*
+
 	password:=common.MD5("33335")
 	value:=url.Values{"acname": {"muling@qq.com"},"password":{password}}
 	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/login",value)
@@ -172,11 +172,16 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	var result Response
-	json.Unmarshal([]byte(strBody),&result)
-	fmt.Println(result)	
 	fmt.Println(strBody)	
-
+*/
+	value:=url.Values{"start_time": {"1441728000"},"end_time": {"1441814400"}}
+	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/manage/user_stat",value)
+	if err!=nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(strBody)	
+/*
 	value:=url.Values{"user_list": {"55c0891de1382334bb000002,55c1804be13823298d000331"}}
 	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/get_user_list",value)
 	if err!=nil {

@@ -93,6 +93,7 @@ func main() {
 	router.POST("/manage/update_only_check_list", action.UpdateOnlyCheckList)
 	router.POST("/manage/reset_password", action.PasswordReset)
 	router.POST("/manage/export_data", action.ExportData)
+	router.POST("/manage/user_stat", action.UserStat)
 
 	read_conf() 
 	
@@ -102,7 +103,7 @@ func main() {
 		web_server:=fmt.Sprintf(":%d",port)
 		log.Fatal(http.ListenAndServe(web_server,  router))
 	}()
-
+	
 	//start https server
 	fmt.Println("Https Server is start at ", time.Now().String(), " , on port 443")
 	https_server:=fmt.Sprintf(":%d",https_port)

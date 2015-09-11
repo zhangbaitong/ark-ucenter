@@ -110,6 +110,7 @@ func ExportMongo( start_time,end_time int) (count int,ok bool) {
 	}
 
 	for i := 0; i < len(result); i++ {
+		
 		//delete from mongodb
 		conditions :=bson.M{"info.phone":result[i].Info["phone"]}
 		err = coll.Remove(conditions)
@@ -122,9 +123,8 @@ func ExportMongo( start_time,end_time int) (count int,ok bool) {
 		if result[i].Ac_id>0 {
 			DeleteUser(result[i].Ac_id)
 		}
-
-		fmt.Println(result[i].Id.Hex())
-		fmt.Println(result[i].Info["phone"])
+		
+		fmt.Print(result[i].Id.Hex(),";",result[i].Info["phone"])
 	}
 	return len(result),true
 /*
@@ -162,3 +162,25 @@ func ExportMongo( start_time,end_time int) (count int,ok bool) {
 */	
 }
 
+func RegUserStat(start_time,end_time ,source int ) (count int,ok bool) {
+	mydb := common.GetDB()
+	if mydb == nil {
+		return 0,false
+	}
+	defer common.FreeDB(mydb)
+
+	strSQL := fmt.Sprintf("select count(ac_id) from account_tab where create_time>%d and create_time<=%d and  source=%d", start_time,end_time,source)
+	fmt.Println(strSQL)
+	if err != nil {
+		return 0,false
+	} else {
+		defer rows.Close()
+		if rows.Next() {
+			rows.Scan(&count)
+		} else {
+			return 0,false
+		}
+	}
+	return count,true
+
+}
