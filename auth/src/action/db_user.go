@@ -21,6 +21,7 @@ type ATUserData struct {
 		Ac_id   int
 		Status   int
 		Source   int
+		Source_id  string
 	      Mid string
 		Create_time   int
 }
@@ -42,13 +43,14 @@ type UserInfoAll struct {
 	Ac_name   string
 	Status   int
 	Source   int
+	Source_id  string
 	Create_time   int
 	Info map[string] string
 }
 var ValidTime int64=300	
 var RefreshTime int64=60
 const (
-	INSERT string = "insert into account_tab (ac_name,ac_password,status,mid,source,create_time) values (?,?,?,?,?,unix_timestamp())"	
+	INSERT string = "insert into account_tab (ac_name,ac_password,status,mid,source,source_id,create_time) values (?,?,?,?,?,?,unix_timestamp())"	
 )
 const (
 	OK=iota
@@ -197,7 +199,7 @@ func MultiRegister(Info* map[string]string) (InfoResult UserInfoResult,code int)
 	return InfoResult,0
 }
 
-func RegisterInsert(strACName,strPassword,strID string,nSource int) (ok bool) {
+func RegisterInsert(strACName,strPassword,strID string,nSource int,strSourceID string) (ok bool) {
 	mydb := common.GetDB()
 	if mydb == nil {
 		return false
@@ -217,7 +219,7 @@ func RegisterInsert(strACName,strPassword,strID string,nSource int) (ok bool) {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(strACName, strPassword, 0,strID,nSource)
+	_, err = stmt.Exec(strACName, strPassword, 0,strID,nSource,strSourceID)
 	if err != nil {
 		fmt.Println(err)
 		return false
@@ -361,7 +363,7 @@ func GetUserInfoM(id string) (UserInfo ATUserInfo,ok bool) {
 
 func GetUser(ac_name string) (UserData* ATUserData,ok bool) {
 	UserData=&ATUserData{}
-	strSQL := fmt.Sprintf("select ac_name,ac_id,status,source,mid,create_time from account_tab where ac_name='%s' ", ac_name)
+	strSQL := fmt.Sprintf("select ac_name,ac_id,status,source,source_id,mid,create_time from account_tab where ac_name='%s' ", ac_name)
 	mydb := common.GetDB()
 	if mydb == nil {
 		fmt.Println("get db connection error3333")
@@ -375,7 +377,7 @@ func GetUser(ac_name string) (UserData* ATUserData,ok bool) {
 	} else {
 		defer rows.Close()
 		if rows.Next() {
-			rows.Scan(&UserData.Ac_name,&UserData.Ac_id,&UserData.Status,&UserData.Source,&UserData.Mid,&UserData.Create_time)
+			rows.Scan(&UserData.Ac_name,&UserData.Ac_id,&UserData.Status,&UserData.Source,&UserData.Source_id,&UserData.Mid,&UserData.Create_time)
 		} else {
 			return UserData,false
 		}
@@ -385,7 +387,7 @@ func GetUser(ac_name string) (UserData* ATUserData,ok bool) {
 
 func GetUserById(id string) (UserData* ATUserData,ok bool) {
 	UserData=&ATUserData{}
-	strSQL := fmt.Sprintf("select ac_name,ac_id,status,source,mid,create_time from account_tab where mid='%s' ", id)
+	strSQL := fmt.Sprintf("select ac_name,ac_id,status,source,source_id,mid,create_time from account_tab where mid='%s' ", id)
 	mydb := common.GetDB()
 	if mydb == nil {
 		fmt.Println("get db connection error2222")
@@ -399,7 +401,7 @@ func GetUserById(id string) (UserData* ATUserData,ok bool) {
 	} else {
 		defer rows.Close()
 		if rows.Next() {
-			rows.Scan(&UserData.Ac_name,&UserData.Ac_id,&UserData.Status,&UserData.Source,&UserData.Mid,&UserData.Create_time)
+			rows.Scan(&UserData.Ac_name,&UserData.Ac_id,&UserData.Status,&UserData.Source,&UserData.Source_id,&UserData.Mid,&UserData.Create_time)
 		} else {
 			return UserData,false
 		}
@@ -409,7 +411,7 @@ func GetUserById(id string) (UserData* ATUserData,ok bool) {
 
 func GetUserByAcId(acid int) (UserData* ATUserData,ok bool) {
 	UserData=&ATUserData{}
-	strSQL := fmt.Sprintf("select ac_name,ac_id,status,source,mid,create_time from account_tab where ac_id=%d ", acid)
+	strSQL := fmt.Sprintf("select ac_name,ac_id,status,source,source_id,mid,create_time from account_tab where ac_id=%d ", acid)
 	mydb := common.GetDB()
 	if mydb == nil {
 		fmt.Println("get db connection error2222")
@@ -423,7 +425,7 @@ func GetUserByAcId(acid int) (UserData* ATUserData,ok bool) {
 	} else {
 		defer rows.Close()
 		if rows.Next() {
-			rows.Scan(&UserData.Ac_name,&UserData.Ac_id,&UserData.Status,&UserData.Source,&UserData.Mid,&UserData.Create_time)
+			rows.Scan(&UserData.Ac_name,&UserData.Ac_id,&UserData.Status,&UserData.Source,&UserData.Source_id,&UserData.Mid,&UserData.Create_time)
 		} else {
 			return UserData,false
 		}

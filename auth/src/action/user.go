@@ -122,11 +122,18 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	acname := req.FormValue("acname")
 	password := req.FormValue("password")
 
+	source_id := req.FormValue("source_id")
+	nSource:=0
+	if source_id == "" {
+		source_id="funzhou"
+	}
+
 	if acname == ""  || password==""{
 		strBody := []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
 		w.Write(strBody)
 		return 
 	}
+
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
 	UserData,ok:=GetUser(acname)
 	if ok {
@@ -138,7 +145,7 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 
 	//password=common.MD5(password)
 	Id:=bson.NewObjectId()
-	ok = RegisterInsert(acname,password,Id.Hex(),0)
+	ok = RegisterInsert(acname,password,Id.Hex(),nSource,source_id)
 	if !ok {
 		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",INSERT_DB_ERROR,GetError(INSERT_DB_ERROR)))
 		w.Write(strBody)
@@ -148,7 +155,7 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	//save others info
 	Info:=make(map[string]string)
 	for k, v := range req.Form {
-		if k== "acname" || k== "password"  || k== "reg_type" {
+		if k== "acname" || k== "password"  || k== "source" || k== "source_id" || k== "reg_type" {
 			continue
 		}
 
@@ -184,8 +191,9 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 }
 
 func GetSMSUrl(strMobile,strMessage string) string {
-	var Url *url.URL
-	Url, err := url.Parse("http://sms.gyjbh.nvwayun.com")
+	var Url *url.URL 
+	//Url, err := url.Parse("http://sms.gyjbh.nvwayun.com")
+	Url, err := url.Parse(SMSHost)
 	if err != nil {
 		return ""
 	}
@@ -214,6 +222,12 @@ func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 	fmt.Println(req.Form)
 	mobile := req.FormValue("mobile")
 
+	source_id := req.FormValue("source_id")
+	nSource:=1
+	if source_id == "" {
+		source_id="dzq"
+	}
+
 	if mobile == "" {
 		strBody := []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
 		w.Write(strBody)
@@ -230,7 +244,7 @@ func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 		} else {
 			Id=bson.NewObjectId()
 		}
-		ok_reg := RegisterInsert(mobile,"",Id.Hex(),1)
+		ok_reg := RegisterInsert(mobile,"",Id.Hex(),nSource,source_id)
 		if !ok_reg {
 			strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",INSERT_DB_ERROR,GetError(INSERT_DB_ERROR)))
 			w.Write(strBody)
@@ -333,6 +347,7 @@ func CheckVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Para
 	InfoAll.Ac_name 		=UserData.Ac_name
 	InfoAll.Status		=UserData.Status
 	InfoAll.Source   		=UserData.Source
+	InfoAll.Source_id   	=UserData.Source_id
 	InfoAll.Create_time  =UserData.Create_time
 	InfoAll.Info           =UserInfo.Info
 	strUser, err := json.Marshal(InfoAll)
@@ -385,6 +400,7 @@ func LoginCenter(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 		InfoAll.Ac_name 		=UserData.Ac_name
 		InfoAll.Status		=UserData.Status
 		InfoAll.Source   		=UserData.Source
+		InfoAll.Source_id	=UserData.Source_id
 		InfoAll.Create_time  =UserData.Create_time
 		InfoAll.Info           =UserInfo.Info
 		strUser, err := json.Marshal(InfoAll)
@@ -521,6 +537,7 @@ func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 				InfoAll.Ac_name 		=UserData.Ac_name
 				InfoAll.Status		=UserData.Status
 				InfoAll.Source   		=UserData.Source
+				InfoAll.Source_id	=UserData.Source_id
 				InfoAll.Create_time  =UserData.Create_time
 			}
 			InfoAll.Id              =strID
@@ -553,6 +570,7 @@ func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 					InfoAll.Ac_name 		=UserData.Ac_name
 					InfoAll.Status		=UserData.Status
 					InfoAll.Source   		=UserData.Source
+					InfoAll.Source_id	=UserData.Source_id
 					InfoAll.Create_time  =UserData.Create_time
 				} else {
 				}		
@@ -602,6 +620,7 @@ func GetUserList(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 		InfoAll.Ac_name 		=UserData.Ac_name
 		InfoAll.Status		=UserData.Status
 		InfoAll.Source   		=UserData.Source
+		InfoAll.Source_id	=UserData.Source_id
 		InfoAll.Create_time  =UserData.Create_time
 		InfoAll.Info           =UserInfo.Info
 		List[UserList[i]]=InfoAll
