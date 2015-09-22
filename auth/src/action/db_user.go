@@ -537,32 +537,3 @@ func UpdatePassword(strAcName string, strOldPwd string, strNewPwd string)(ok boo
 	tx.Commit()
 	return true
 }
-
-func ResetPassword(strAcName string,strNewPwd string)(ok bool){
-	mydb := common.GetDB()
-	if(mydb==nil){
-		return false
-	}	
-	defer common.FreeDB(mydb)
-
-	tx, err := mydb.Begin()
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
-	stmt, err := tx.Prepare(" UPDATE account_tab SET ac_password=? where ac_name=? ")
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(strNewPwd, strAcName)
-
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
-	tx.Commit()
-	return true
-}

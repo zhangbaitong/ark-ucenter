@@ -5,11 +5,12 @@ create table IF NOT EXISTS account_tab(
   ac_name varchar(100) not null COMMENT '账户名称',
   ac_password varchar(50) not null COMMENT '账户密码',
   status   integer not null COMMENT '账户状态0:启用;1:停用;',
-  source   integer not null DEFAULT 0 COMMENT '账户来源0:直接注册;1:QQ;',
+  source   integer not null DEFAULT 0 COMMENT '账户来源0:直接注册;1:验证码注册',
   mid       varchar(32) not null COMMENT 'mongodb object id',
   create_time   integer not null,
   PRIMARY KEY (`ac_id`)
 )ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='认证中心-账号表'  AUTO_INCREMENT=1;
+ALTER TABLE `account_tab` ADD `source_id` VARCHAR(100) NOT NULL DEFAULT '' COMMENT '来源ID' AFTER `source`;
 
 create table IF NOT EXISTS app_info_tab(
   app_id varchar(50) not null  COMMENT '应用ID',

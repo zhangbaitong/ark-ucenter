@@ -11,6 +11,7 @@
   reg_type:这册类型0:普通注册1:泛用户注册;
   acname:用户帐号
   password：用户密码
+  source_id：来源组件ID
    回复消息：
    成功应答
   {"Code":0,"Message":"{"Id":"55c0891de1382334bb000002","Ac_name":"18585816541","Status":0,"Source":0,"Create_time":1438681373,"Info":{"email":"gyzly@sina.com"}}"}
@@ -128,7 +129,8 @@
   请求方式：POST
   请求参数:
   mobile:手机号码
-   回复消息：
+  source_id：来源组件ID
+回复消息：
    成功应答
   {"Code":0,"Message":"{"verify_code":"839234"}"}
    失败应答
