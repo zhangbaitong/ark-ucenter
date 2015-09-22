@@ -175,6 +175,7 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	InfoAll.Ac_name 		=UserData.Ac_name
 	InfoAll.Status		=UserData.Status
 	InfoAll.Source   		=UserData.Source
+	InfoAll.Source_id   	=UserData.Source_id
 	InfoAll.Create_time  =UserData.Create_time
 	InfoAll.Info           =Info
 	strUser, err := json.Marshal(InfoAll)
