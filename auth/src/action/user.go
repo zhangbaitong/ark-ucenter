@@ -618,6 +618,7 @@ func GetUserList(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 		}
 
 		UserData,ok := GetUserById(UserList[i])
+		fmt.Println(UserData.Mid)
 		if !ok {
 			InfoAll.Id              =UserList[i]
 			UserInfo,ok2:=GetUserInfoM(UserData.Mid)
