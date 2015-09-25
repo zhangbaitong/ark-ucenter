@@ -610,6 +610,13 @@ func GetUserList(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 	List := make(map[string]UserInfoAll)
 	for i := 0; i < len(UserList); i++ {
 		InfoAll:=UserInfoAll{}
+
+		d, err := hex.DecodeString(UserList[i])
+		if err != nil || len(d) != 12 {
+			List[UserList[i]]=InfoAll
+			continue
+		}
+
 		UserData,ok := GetUserById(UserList[i])
 		if !ok {
 			InfoAll.Id              =UserList[i]
