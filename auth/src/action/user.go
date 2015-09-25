@@ -609,14 +609,20 @@ func GetUserList(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 	UserList:=strings.Split(user_list, ",")
 	List := make(map[string]UserInfoAll)
 	for i := 0; i < len(UserList); i++ {
+		InfoAll:=UserInfoAll{}
 		UserData,ok := GetUserById(UserList[i])
 		if !ok {
-			List[UserList[i]]=UserInfoAll{}
+			InfoAll.Id              =UserList[i]
+			UserInfo,ok2:=GetUserInfoM(UserData.Mid)
+			if ok2 {
+				InfoAll.Create_time  =UserInfo.Create_time
+				InfoAll.Info           =UserInfo.Info
+			}
+			List[UserList[i]]=InfoAll
 			continue
 		}
 
 		UserInfo,ok:=GetUserInfoM(UserData.Mid)
-		InfoAll:=UserInfoAll{}
 		InfoAll.Id              =UserData.Mid
 		InfoAll.Ac_name 		=UserData.Ac_name
 		InfoAll.Status		=UserData.Status
