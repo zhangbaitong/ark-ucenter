@@ -617,26 +617,25 @@ func GetUserList(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 			continue
 		}
 
-		UserData,ok := GetUserById(UserList[i])
+		UserInfo,ok:=GetUserInfoM(UserList[i])
 		if !ok {
-			InfoAll.Id              =UserList[i]
-			UserInfo,ok2:=GetUserInfoM(UserList[i])
-			if ok2 {
-				InfoAll.Create_time  =UserInfo.Create_time
-				InfoAll.Info           =UserInfo.Info
-			}
 			List[UserList[i]]=InfoAll
 			continue
 		}
 
-		UserInfo,ok:=GetUserInfoM(UserData.Mid)
-		InfoAll.Id              =UserData.Mid
-		InfoAll.Ac_name 		=UserData.Ac_name
-		InfoAll.Status		=UserData.Status
-		InfoAll.Source   		=UserData.Source
-		InfoAll.Source_id	=UserData.Source_id
-		InfoAll.Create_time  =UserData.Create_time
+		InfoAll.Id              =UserList[i]
 		InfoAll.Info           =UserInfo.Info
+		UserData,ok := GetUserById(UserList[i])
+		if ok {
+			InfoAll.Ac_name 		=UserData.Ac_name
+			InfoAll.Status		=UserData.Status
+			InfoAll.Source   		=UserData.Source
+			InfoAll.Source_id	=UserData.Source_id
+			InfoAll.Create_time  =UserData.Create_time
+		} else {
+			InfoAll.Create_time  =UserInfo.Create_time			
+		}
+		
 		List[UserList[i]]=InfoAll
 	}
 
