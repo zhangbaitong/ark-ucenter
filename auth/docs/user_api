@@ -12,6 +12,7 @@
   acname:用户帐号
   password：用户密码
   source_id：来源组件ID
+  show_id:展会id
    回复消息：
    成功应答
   {"Code":0,"Message":"{"Id":"55c0891de1382334bb000002","Ac_name":"18585816541","Status":0,"Source":0,"Create_time":1438681373,"Info":{"email":"gyzly@sina.com"}}"}
@@ -83,6 +84,7 @@
   请求方式：POST
   请求参数:
   id:用户id
+  show_id:展会id
   参数名称 参数值 
   参数名称 参数值 
   ... ... 
@@ -102,6 +104,7 @@
   请求参数:
   参数名称 参数值 
   id：55c0891de1382334bb000002
+  show_id:展会id
    或者
   email:gyzly@sina.com
   回复消息：
@@ -116,6 +119,7 @@
   请求方式：POST
   请求参数:
   user_list用户列表
+  show_id:展会id
   例如：user_list 55c0891de1382334bb000002,55c1804be13823298d000001
   回复消息：
   成功应答
@@ -130,6 +134,7 @@
   请求参数:
   mobile:手机号码
   source_id：来源组件ID
+  show_id:展会id
 回复消息：
    成功应答
   {"Code":0,"Message":"{"verify_code":"839234"}"}
@@ -161,3 +166,5 @@ company_name
 company_addr
 job
 openid
+show_id
+user_list

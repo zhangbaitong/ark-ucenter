@@ -87,11 +87,12 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	req.ParseForm()
 	fmt.Println(req.Form)
 	reg_type := req.FormValue("reg_type")
+	show_id := req.FormValue("show_id")
 	if reg_type=="1" {
 		strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
 		Info:=make(map[string]string)
 		for k, v := range req.Form {
-			if k== "reg_type" {
+			if k== "reg_type" || k== "show_id" {
 				continue
 			}
 			Info[k]=v[0]
@@ -116,6 +117,9 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 			}
 		}
 		w.Write(strBody)
+
+		SetUserLocus(UserData.Id,UserData.Id,show_id,&Info)
+
 		return 
 	}
 
@@ -155,7 +159,7 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	//save others info
 	Info:=make(map[string]string)
 	for k, v := range req.Form {
-		if k== "acname" || k== "password"  || k== "source" || k== "source_id" || k== "reg_type" {
+		if k== "acname" || k== "password"  || k== "source" || k== "source_id" || k== "reg_type" || k== "show_id" {
 			continue
 		}
 
@@ -182,10 +186,13 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	if err != nil {
 		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",UNKNOWN_ERROR,GetError(UNKNOWN_ERROR)))
 	} else {
-		 var response Response		
-		 response.Code=0
-		 response.Message=string(strUser)
-		 strBody, _ = json.Marshal(response)
+		var response Response		
+		response.Code=0
+		response.Message=string(strUser)
+		strBody, _ = json.Marshal(response)
+
+		SetUserLocus(UserData.Mid,UserData.Mid,show_id,&Info)
+		
 	}
 
 	w.Write(strBody)
@@ -224,6 +231,7 @@ func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 	mobile := req.FormValue("mobile")
 
 	source_id := req.FormValue("source_id")
+	show_id := req.FormValue("show_id")
 	nSource:=1
 	if source_id == "" {
 		source_id="dzq"
@@ -238,6 +246,7 @@ func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
 	_,ok:=GetUser(mobile)
 	if !ok {
+		fmt.Println("GetVerifyCode not found!!!");
 		var Id bson.ObjectId 
 		UserInfo,ok:=isUserExist("info.mobile",mobile)
 		if ok {
@@ -263,11 +272,21 @@ func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 
 		if !ok {
 			InsertUserInfo(&UserInfo_I)
+
+			SetUserLocus(UserData.Mid,UserData.Mid,show_id,&Info)
+
 		} else {
-			ok = UpdateUserInfo(&UserInfo_I)
+			ok = UpdateUserInfo(&UserInfo_I,show_id)
 			if !ok {
 				strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",UPDATE_DB_ERROR,GetError(UPDATE_DB_ERROR)))
 			}
+		}
+	} else {
+		UserInfo,ok:=isUserExist("info.mobile",mobile)
+		if ok {
+			Info:=make(map[string]string)
+			Info["mobile"]=mobile
+			SetUserLocus(UserInfo.Id.Hex(),UserInfo.Id.Hex(),show_id,&Info)
 		}
 	}
 
@@ -283,8 +302,7 @@ func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 			return    	
 	    }
 	}
-    strMessage:=fmt.Sprintf(CheckText,code)
-    fmt.Println(strMessage)
+	strMessage:=fmt.Sprintf(CheckText,code)
 
 	//send SMS
 	strSendURL:=GetSMSUrl(mobile,strMessage)
@@ -303,7 +321,7 @@ func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 
 	fmt.Println(strResult)
 	result:=make(map[string]string)
-	json.Unmarshal([]byte(strResult),&result)
+	json.Unmarshal([]byte(strResult),&result)	
 
 	if result["result"]=="0" {
 		strBody = []byte(fmt.Sprintf("{\"Code\":0,\"Message\":\"{\"verify_code\":\"%06d\"}\"}",code))
@@ -447,6 +465,7 @@ func SetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
 	id := req.FormValue("id")
+	show_id := req.FormValue("show_id")
 	//acname := GetCookieName(req)
 	if id == "" {
 		strBody := []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
@@ -474,7 +493,7 @@ func SetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 	//var  info map[string]string
 	info := make(map[string]string)
 	for k, v := range req.Form {
-		if k== "id" {
+		if k== "id" ||  k== "show_id"{
 			continue
 		}
 		info[k] = v[0]
@@ -482,7 +501,7 @@ func SetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 
 	UserInfo.Info = info
 	UserInfo.Id=bson.ObjectIdHex(id)
-	ok = UpdateUserInfo(&UserInfo)
+	ok = UpdateUserInfo(&UserInfo,show_id)
 	if !ok {
 		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",UPDATE_DB_ERROR,GetError(UPDATE_DB_ERROR)))
 	}
@@ -495,105 +514,199 @@ func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 	var UserData* ATUserData
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")
 	start:=time.Now().UTC().UnixNano()
-	for k, v := range req.Form {
-		if len(v[0])==0 {
-			strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
-			w.Write(strBody)
-			return 
-		}
-		if k== "acname"||  k=="id" {
-			var strID string
-			strID=v[0]
-			if k== "acname" {
-				UserData,ok=GetUser(v[0])
-				if !ok {
+	show_id := req.FormValue("show_id")
+	if len(show_id) == 0 {
+		for k, v := range req.Form {
+			if len(v[0])==0 {
+				strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
+				w.Write(strBody)
+				return 
+			}
+			if k== "acname"||  k=="id" {
+				var strID string
+				strID=v[0]
+				if k== "acname" {
+					UserData,ok=GetUser(v[0])
+					if !ok {
+						strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
+						w.Write(strBody)
+						return 
+					}
+					strID=UserData.Mid
+				} 
+
+				if k=="id" {
+					d, err := hex.DecodeString(v[0])
+					if err != nil || len(d) != 12 {
+						//Invalid input to ObjectIdHex
+						strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
+						w.Write(strBody)
+						return 
+					}
+
+					UserData,ok = GetUserById(v[0])				
+				}
+
+				UserInfo,ok2:=GetUserInfoM(strID)
+				if !ok2 {
 					strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
 					w.Write(strBody)
 					return 
 				}
-				strID=UserData.Mid
-			} 
 
-			if k=="id" {
-				d, err := hex.DecodeString(v[0])
-				if err != nil || len(d) != 12 {
-					//Invalid input to ObjectIdHex
-					strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
+				InfoAll:=UserInfoAll{}
+				if ok {
+					InfoAll.Ac_name 		=UserData.Ac_name
+					InfoAll.Status		=UserData.Status
+					InfoAll.Source   		=UserData.Source
+					InfoAll.Source_id	=UserData.Source_id
+					InfoAll.Create_time  =UserData.Create_time
+				}
+				InfoAll.Id              =strID
+				InfoAll.Info           =UserInfo.Info
+				strUser, err := json.Marshal(InfoAll)
+				if err != nil {
+					strBody = []byte("{\"Code\":1,\"Message\":\"json encode faild\"}")
+				} else {
+					 var response Response		
+					 response.Code=0
+					 response.Message=string(strUser)
+					 strBody, _ = json.Marshal(response)
+				}
+			} else { 
+				strNode:="info."+strings.ToLower(k)
+				fmt.Println(strNode,":",v[0])
+				UserInfo,ok:=isUserExist(strNode,v[0])
+				if !ok {
+					strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
+					w.Write(strBody)
+					return 
+				}			
+
+				InfoAll:=UserInfoAll{}
+				InfoAll.Id=UserInfo.Id.Hex()
+				if UserInfo.Ac_id>-1 {
+					UserData,ok=GetUserByAcId(UserInfo.Ac_id)
+					if ok {
+						InfoAll.Id              =UserData.Mid
+						InfoAll.Ac_name 		=UserData.Ac_name
+						InfoAll.Status		=UserData.Status
+						InfoAll.Source   		=UserData.Source
+						InfoAll.Source_id	=UserData.Source_id
+						InfoAll.Create_time  =UserData.Create_time
+					} else {
+					}		
+
+				} 
+
+				InfoAll.Info           =UserInfo.Info
+				strUser, err := json.Marshal(InfoAll)
+				if err != nil {
+					strBody = []byte("{\"Code\":1,\"Message\":\"json encode faild\"}")
+				} else {
+					 var response Response		
+					 response.Code=0
+					 response.Message=string(strUser)
+					 strBody, _ = json.Marshal(response)
+				}
+			}
+			break
+		}
+	} else {
+		for k, v := range req.Form {
+			if k== "show_id" {
+				continue
+			}
+			if len(v[0])==0 {
+				strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
+				w.Write(strBody)
+				return 
+			}
+			if k== "acname"||  k=="id" {
+				var strID string
+				strID=v[0]
+				if k== "acname" {
+					UserData,ok=GetUser(v[0])
+					if !ok {
+						strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
+						w.Write(strBody)
+						return 
+					}
+					strID=UserData.Mid
+				} 
+
+				if k=="id" {
+					d, err := hex.DecodeString(v[0])
+					if err != nil || len(d) != 12 {
+						//Invalid input to ObjectIdHex
+						strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",PARAM_ERROR,GetError(PARAM_ERROR)))
+						w.Write(strBody)
+						return 
+					}
+
+					UserData,ok = GetUserById(v[0])				
+				}
+
+				Locus,ok2:=isUserExistL("mid_c",strID,show_id)
+				if !ok2 {
+					strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
 					w.Write(strBody)
 					return 
 				}
 
-				UserData,ok = GetUserById(v[0])				
-			}
-
-			UserInfo,ok2:=GetUserInfoM(strID)
-			if !ok2 {
-				strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
-				w.Write(strBody)
-				return 
-			}
-
-			InfoAll:=UserInfoAll{}
-			if ok {
-				InfoAll.Ac_name 		=UserData.Ac_name
-				InfoAll.Status		=UserData.Status
-				InfoAll.Source   		=UserData.Source
-				InfoAll.Source_id	=UserData.Source_id
-				InfoAll.Create_time  =UserData.Create_time
-			}
-			InfoAll.Id              =strID
-			InfoAll.Info           =UserInfo.Info
-			strUser, err := json.Marshal(InfoAll)
-			if err != nil {
-				strBody = []byte("{\"Code\":1,\"Message\":\"json encode faild\"}")
-			} else {
-				 var response Response		
-				 response.Code=0
-				 response.Message=string(strUser)
-				 strBody, _ = json.Marshal(response)
-			}
-		} else { 
-			strNode:="info."+strings.ToLower(k)
-			fmt.Println(strNode,":",v[0])
-			UserInfo,ok:=isUserExist(strNode,v[0])
-			if !ok {
-				strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
-				w.Write(strBody)
-				return 
-			}			
-
-			InfoAll:=UserInfoAll{}
-			InfoAll.Id=UserInfo.Id.Hex()
-			if UserInfo.Ac_id>-1 {
-				UserData,ok=GetUserByAcId(UserInfo.Ac_id)
+				InfoAll:=UserInfoAll{}
 				if ok {
-					InfoAll.Id              =UserData.Mid
 					InfoAll.Ac_name 		=UserData.Ac_name
 					InfoAll.Status		=UserData.Status
 					InfoAll.Source   		=UserData.Source
 					InfoAll.Source_id	=UserData.Source_id
 					InfoAll.Create_time  =UserData.Create_time
 				} else {
-				}		
+					InfoAll.Create_time  =Locus.Create_time
+				}
+				InfoAll.Id              =strID
+				InfoAll.Info           =Locus.Info
+				strUser, err := json.Marshal(InfoAll)
+				if err != nil {
+					strBody = []byte("{\"Code\":1,\"Message\":\"json encode faild\"}")
+				} else {
+					 var response Response		
+					 response.Code=0
+					 response.Message=string(strUser)
+					 strBody, _ = json.Marshal(response)
+				}
+			} else { 
+				strNode:="info."+strings.ToLower(k)
+				fmt.Println(strNode,":",v[0])
+				Locus,ok:=isUserExistL(strNode,v[0],show_id)
+				if !ok {
+					strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_NOT_EX,GetError(USER_NOT_EX)))
+					w.Write(strBody)
+					return 
+				}			
 
-			} 
+				InfoAll:=UserInfoAll{}
 
-			InfoAll.Info           =UserInfo.Info
-			strUser, err := json.Marshal(InfoAll)
-			if err != nil {
-				strBody = []byte("{\"Code\":1,\"Message\":\"json encode faild\"}")
-			} else {
-				 var response Response		
-				 response.Code=0
-				 response.Message=string(strUser)
-				 strBody, _ = json.Marshal(response)
+				InfoAll.Id=Locus.Mid_c
+				InfoAll.Create_time  =Locus.Create_time
+				InfoAll.Info           =Locus.Info
+
+				strUser, err := json.Marshal(InfoAll)
+				if err != nil {
+					strBody = []byte("{\"Code\":1,\"Message\":\"json encode faild\"}")
+				} else {
+					 var response Response		
+					 response.Code=0
+					 response.Message=string(strUser)
+					 strBody, _ = json.Marshal(response)
+				}
 			}
-		}
-		w.Write(strBody)
-		end:=time.Now().UTC().UnixNano()
-		fmt.Println("used time ",(end-start)/1000)
-		break
+			break
+		}		
 	}
+	w.Write(strBody)
+	end:=time.Now().UTC().UnixNano()
+	fmt.Println("used time ",(end-start)/1000)
 }
 
 func GetUserList(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
@@ -606,37 +719,61 @@ func GetUserList(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 		return
 	}
 
+	show_id := req.FormValue("show_id")
 	UserList:=strings.Split(user_list, ",")
 	List := make(map[string]UserInfoAll)
-	for i := 0; i < len(UserList); i++ {
-		InfoAll:=UserInfoAll{}
+	if len(show_id) == 0 {		
+		for i := 0; i < len(UserList); i++ {
+			InfoAll:=UserInfoAll{}
 
-		d, err := hex.DecodeString(UserList[i])
-		if err != nil || len(d) != 12 {
+			d, err := hex.DecodeString(UserList[i])
+			if err != nil || len(d) != 12 {
+				List[UserList[i]]=InfoAll
+				continue
+			}
+
+			UserInfo,ok:=GetUserInfoM(UserList[i])
+			if !ok {
+				List[UserList[i]]=InfoAll
+				continue
+			}
+
+			InfoAll.Id              =UserList[i]
+			InfoAll.Info           =UserInfo.Info
+			UserData,ok := GetUserById(UserList[i])
+			if ok {
+				InfoAll.Ac_name 		=UserData.Ac_name
+				InfoAll.Status		=UserData.Status
+				InfoAll.Source   		=UserData.Source
+				InfoAll.Source_id	=UserData.Source_id
+				InfoAll.Create_time  =UserData.Create_time
+			} else {
+				InfoAll.Create_time  =UserInfo.Create_time			
+			}
+			
 			List[UserList[i]]=InfoAll
-			continue
 		}
+	} else {
+		for i := 0; i < len(UserList); i++ {
+			InfoAll:=UserInfoAll{}
 
-		UserInfo,ok:=GetUserInfoM(UserList[i])
-		if !ok {
+			d, err := hex.DecodeString(UserList[i])
+			if err != nil || len(d) != 12 {
+				List[UserList[i]]=InfoAll
+				continue
+			}
+
+			Locus,ok:=isUserExistL("mid_c",UserList[i],show_id)
+			if !ok {
+				List[UserList[i]]=InfoAll
+				continue
+			}
+
+			InfoAll.Id              =UserList[i]
+			InfoAll.Info           =Locus.Info
+			InfoAll.Create_time  =Locus.Create_time								
 			List[UserList[i]]=InfoAll
-			continue
-		}
-
-		InfoAll.Id              =UserList[i]
-		InfoAll.Info           =UserInfo.Info
-		UserData,ok := GetUserById(UserList[i])
-		if ok {
-			InfoAll.Ac_name 		=UserData.Ac_name
-			InfoAll.Status		=UserData.Status
-			InfoAll.Source   		=UserData.Source
-			InfoAll.Source_id	=UserData.Source_id
-			InfoAll.Create_time  =UserData.Create_time
-		} else {
-			InfoAll.Create_time  =UserInfo.Create_time			
-		}
-		
-		List[UserList[i]]=InfoAll
+		}		
 	}
 
 	strUser, err := json.Marshal(&List)

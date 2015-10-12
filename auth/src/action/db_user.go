@@ -47,6 +47,16 @@ type UserInfoAll struct {
 	Create_time   int
 	Info map[string] string
 }
+
+type UserJoinLocus struct {
+	Id bson.ObjectId "_id"
+	Mid string
+	Mid_c string
+	Show_id  string
+	Create_time   int
+	Info map[string] string
+}
+
 var ValidTime int64=300	
 var RefreshTime int64=60
 const (
@@ -169,6 +179,108 @@ func VerifyCodeCheck(mobile string, code int ) bool {
 	}
 
 	return false
+}
+
+func GetUserLocus(Mid ,Mid_c,show_id string) (Locus UserJoinLocus,ok bool) {
+	session := common.GetSession()
+	if(session==nil){
+		return Locus,false
+	}	
+	defer common.FreeSession(session)
+
+	coll := session.DB("at_db").C("locus_tab")
+	err:=coll.Find(&bson.M{"mid":Mid,"mid_c":Mid_c,"show_id":show_id}).Sort(Mid).One(&Locus)
+	if(err==nil){
+		return Locus,true
+	}
+	fmt.Println(err)
+	return Locus,false
+}
+
+func isUserExistL(name, value,show_id string)  (Locus UserJoinLocus,ok bool) {
+	session := common.GetSession()
+	if(session==nil){
+		return Locus,false
+	}	
+	defer common.FreeSession(session)
+
+	coll := session.DB("at_db").C("locus_tab")
+	err:=coll.Find(&bson.M{name:value,"show_id":show_id}).Sort("mid").One(&Locus)
+	if(err==nil){
+		return Locus,true
+	}
+	fmt.Println(err)
+	return Locus,false
+}
+
+
+func RemoveUser(Id bson.ObjectId)(ok bool) {
+	session := common.GetSession()
+	if(session==nil){
+		return false
+	}	
+	defer common.FreeSession(session)
+
+	coll := session.DB("at_db").C("user_tab")
+	err:=coll.RemoveId(Id)
+	if(err==nil){
+		return true
+	}
+	fmt.Println(err)
+	return false
+}
+
+func RemoveUserLocus(mid,mid_c string)(ok bool) {
+	session := common.GetSession()
+	if(session==nil){
+		return false
+	}	
+	defer common.FreeSession(session)
+
+	coll := session.DB("at_db").C("locus_tab")
+	err:=coll.Remove(bson.M{"mid":mid,"mid_c":mid_c})
+	if(err==nil){
+		return true
+	}
+	fmt.Println(err)
+	return false
+}
+
+func SetUserLocus(Mid string,Mid_c string,show_id string,Info* map[string]string) (ok bool,UserLocus UserJoinLocus){
+	UserLocus,OK:=GetUserLocus(Mid,Mid_c,show_id)
+
+	session := common.GetSession()
+	if(session==nil){
+		return true,UserLocus
+	}	
+	defer common.FreeSession(session)
+
+	coll := session.DB("at_db").C("locus_tab")
+	if OK {
+		for k, v := range *Info {
+			UserLocus.Info[k]=v
+		}		
+		condition:=bson.M{"mid":Mid,"mid_c":Mid_c,"show_id":show_id}
+		err := coll.Update(condition, bson.M{"$set": bson.M{"info": UserLocus.Info}})
+		if(err==nil){
+			return true,UserLocus
+		}
+		return false,UserLocus
+	}
+
+	UserLocus.Info=*Info
+	UserLocus.Id=bson.NewObjectId()
+	UserLocus.Create_time=GetTimeStamp()
+	UserLocus.Info=*Info
+	UserLocus.Mid=Mid
+	UserLocus.Mid_c=Mid_c
+	UserLocus.Show_id=show_id
+
+	err:=coll.Insert(&UserLocus)
+	if(err!=nil){		
+		return false,UserLocus
+	}
+	return true,UserLocus
 }
 
 func MultiRegister(Info* map[string]string) (InfoResult UserInfoResult,code int){
@@ -306,7 +418,24 @@ func InsertUserInfo(UserInfo* ATUserInfo) (ok bool) {
 	return true
 }
 
-func UpdateUserInfo(UserInfo* ATUserInfo) (ok bool) {
+func GetUserInfoL(id string) (Locus UserJoinLocus,ok bool) {
+	session := common.GetSession()
+	if(session==nil){
+		return Locus,false
+	}	
+	defer common.FreeSession(session)
+
+	coll := session.DB("at_db").C("locus_tab")
+	fmt.Println("id=",id)
+	err:=coll.Find(&bson.M{"mid_c": id}).One(&Locus)
+	if(err==nil){
+		return Locus,true
+	}
+	fmt.Println(err)
+	return Locus,false
+}
+
+func UpdateUserInfo(UserInfo* ATUserInfo,show_id string) (ok bool) {
 	session := common.GetSession()
 	if(session==nil){
 		return false
@@ -329,19 +458,58 @@ func UpdateUserInfo(UserInfo* ATUserInfo) (ok bool) {
 		return false
 	}
 
-	old_info,ok:=GetUserInfoM(UserInfo.Id.Hex())
-	coll := session.DB("at_db").C("user_tab")	
-	if ok {
-		for k, v := range UserInfo.Info {
-			old_info.Info[k]=v
+	User,OK:=isUserExist_m(&UserInfo.Info)
+	if OK {
+		var Id bson.ObjectId
+		if UserInfo.Id==User.Id {
+			Id=UserInfo.Id
+		} else {			
+			Id=User.Id
+		}
+
+		old_info,ok:=GetUserInfoM(Id.Hex())
+		coll := session.DB("at_db").C("user_tab")	
+		if ok {
+			for k, v := range UserInfo.Info {
+				old_info.Info[k]=v
+			}		
+			condition:=&bson.M{"_id": Id}
+			err := coll.Update(condition, bson.M{"$set": bson.M{"info": old_info.Info}})
+			if(err!=nil){
+				return false
+			}
+		}
+
+		if UserInfo.Id==User.Id {
+			SetUserLocus(Id.Hex(),Id.Hex(),show_id,&UserInfo.Info)
+		} else {
+			RemoveUser(UserInfo.Id)
+			RemoveUserLocus(UserInfo.Id.Hex(),UserInfo.Id.Hex())
+			SetUserLocus(Id.Hex(),UserInfo.Id.Hex(),show_id,&UserInfo.Info)
 		}		
-		condition:=&bson.M{"_id": UserInfo.Id}
-		err := coll.Update(condition, bson.M{"$set": bson.M{"info": old_info.Info}})
-		if(err==nil){
-			return true
+	} else {
+		Locus,ok:=GetUserInfoL(UserInfo.Id.Hex())
+		if !ok {
+			return false	
+		}
+		old_info,ok:=GetUserInfoM(Locus.Mid)
+		coll := session.DB("at_db").C("user_tab")	
+		if ok {
+			for k, v := range UserInfo.Info {
+				old_info.Info[k]=v
+			}		
+			condition:=&bson.M{"_id":bson.ObjectIdHex(Locus.Mid)}
+			err := coll.Update(condition, bson.M{"$set": bson.M{"info": old_info.Info}})
+			if(err!=nil){
+				return false	
+			}
+			SetUserLocus(Locus.Mid,Locus.Mid_c,show_id,&UserInfo.Info)
+		} else {
+			return false	
 		}
 	}
-	return false	
+
+	return true	
 }
 
 func GetUserInfoM(id string) (UserInfo ATUserInfo,ok bool) {
