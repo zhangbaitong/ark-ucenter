@@ -5,7 +5,6 @@ import (
 	_"strings"
 	"common"
 	"gopkg.in/mgo.v2/bson" 
-	"os/exec"
 )
 type Response struct {
 	Code int
@@ -15,6 +14,16 @@ type Response struct {
 type ATUserInfo struct {
       Id bson.ObjectId "_id"
 	Ac_id   int
+	Create_time   int
+	Info map[string] string
+}
+
+type UserJoinLocus struct {
+	Id bson.ObjectId "_id"
+	Mid string
+	Mid_c string
+	Show_id  string
+	Create_time   int
 	Info map[string] string
 }
 
@@ -58,6 +67,41 @@ func  GetDictionary(Name string) {
 	return 
 }
 
+func  SaveLocus(show_id string) {
+	session := common.GetSession()
+	if(session==nil){
+		return 
+	}
+	defer common.FreeSession(session)
+
+	var result []ATUserInfo
+	//result := ATUserInfo[]
+	coll := session.DB("at_db").C("user_tab")
+
+	err:=coll.Find(&bson.M{}).All(&result)
+	if err!=nil {
+		fmt.Println(err)	
+		return 
+	}
+
+	Locus:=UserJoinLocus{}
+	coll = session.DB("at_db").C("locus_tab")
+	for i := 0; i < len(result); i++ {
+
+		Locus.Id=bson.NewObjectId()
+		Locus.Mid=result[i].Id.Hex()
+		Locus.Mid_c=result[i].Id.Hex()
+		Locus.Show_id=show_id
+		Locus.Create_time=result[i].Create_time
+		Locus.Info=result[i].Info
+		err=coll.Insert(&Locus)
+		if(err!=nil){		
+			fmt.Println(err)
+			break;
+		}
+	}	
+	return 
+}
 /*
 sh := exec.Command("/bin/echo '"+ SubstrAfter(container.Name,0)+"' >> /etc/dnsmasq.d/dnsmasq.hosts", "service dnsmasq restart")
 out, err := sh.CombinedOutput()
@@ -67,22 +111,9 @@ fmt.Println(err, ":", string(out))
 } 
 */
 func main() {
-/*	
-	out, err := exec.Command("date").Output()
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Printf("The date is %s\n", out)
-*/	
-	//List:=strings.Split("qq,email,mobile,weibo", ",")
-	//InsertDictionary("check_list",List)
-	
-	sh := exec.Command("/usr/bin/echo","test",">>","test.dat")
-	out, err := sh.CombinedOutput()
-	fmt.Println("out=", string(out), "err=", err)
-	if err != nil {
-		fmt.Println(err, ":", string(out))
-	} 
-	
-	//GetDictionary("check_list")
+//List:=strings.Split("qq,email,mobile,weibo", ",")
+//InsertDictionary("check_list",List)
+
+//GetDictionary("check_list")
+	SaveLocus("old");
 }
