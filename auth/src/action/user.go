@@ -138,11 +138,21 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 		return 
 	}
 
+	//save others info
+	Info:=make(map[string]string)
+	for k, v := range req.Form {
+		if k== "acname" || k== "password"  || k== "source" || k== "source_id" || k== "reg_type" || k== "show_id" {
+			continue
+		}
+
+		Info[k]=v[0]
+	}
+
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
 	UserData,ok:=GetUser(acname)
 	if ok {
 		strBody= []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"{\\\"Id\\\":\\\"%s\\\"}\"}",USER_EX,UserData.Mid))
-		//strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",USER_EX,GetError(USER_EX)))
+		SetUserLocus(UserData.Mid,UserData.Mid,show_id,&Info)
 		w.Write(strBody)
 		return 
 	}
@@ -154,16 +164,6 @@ func Register(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 		strBody = []byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\"}",INSERT_DB_ERROR,GetError(INSERT_DB_ERROR)))
 		w.Write(strBody)
 		return
-	}
-
-	//save others info
-	Info:=make(map[string]string)
-	for k, v := range req.Form {
-		if k== "acname" || k== "password"  || k== "source" || k== "source_id" || k== "reg_type" || k== "show_id" {
-			continue
-		}
-
-		Info[k]=v[0]
 	}
 
 	UserData,_=GetUser(acname)
@@ -246,7 +246,6 @@ func GetVerifyCode(w http.ResponseWriter, req *http.Request, _ httprouter.Params
 	strBody := []byte("{\"Code\":0,\"Message\":\"ok\"}")	
 	_,ok:=GetUser(mobile)
 	if !ok {
-		fmt.Println("GetVerifyCode not found!!!");
 		var Id bson.ObjectId 
 		UserInfo,ok:=isUserExist("info.mobile",mobile)
 		if ok {
