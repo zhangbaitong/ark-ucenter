@@ -643,7 +643,7 @@ func GetUserInfo(w http.ResponseWriter, req *http.Request, _ httprouter.Params) 
 						return 
 					}
 
-					UserData,ok = GetUserById(v[0])				
+					UserData,ok = GetUserById(v[0])
 				}
 
 				Locus,ok2:=isUserExistL("mid_c",strID,show_id)

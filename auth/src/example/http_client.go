@@ -62,7 +62,7 @@ func main() {
 		return
 	}
 	fmt.Println(strBody)	
-*/
+
 	strVerifyCode:="912297" 
 	value:=url.Values{"mobile": {"18585816540"},"verify_code":{strVerifyCode},"show_id":{"tomtest"}}
 	//value:=url.Values{"mobile": {"15519028660"},"verify_code":{strVerifyCode}}
@@ -76,7 +76,7 @@ func main() {
 		return
 	}
 	fmt.Println(strBody)	
-/*
+
 	value:=url.Values{"openid": {"55e170e1e138230f4zhw"}}
 	//value:=url.Values{"id": {"55cabc1de1382334ec000006"},"need_send_sms":{"0"}}
 	//value:=url.Values{"id": {"55e14babe138232c79000001"}}
@@ -143,8 +143,8 @@ func main() {
 	}
 	fmt.Println(strBody)	
 
-	//value:=url.Values{"id": {"561b1f35e138232394000001"},"show_id":{"tomtest"},"name": {"zhanghuawen"},"source_id": {"funzhou_0001"},"company_name": {"infobird"},"job":{"yanfa"},"haha":{"yanfa66"},"company_addr":{""},"email":{"18984550008@qq.com"},"mobile":{"18984550008"}}
-	value:=url.Values{"id": {"561c592fe138231d79000002"},"show_id":{"tomtest"},"name": {"tomzhao"},"company_name": {"infobird"},"job":{"yanfa"},"company_addr":{""},"email":{"18585816540@qq.com"},"mobile":{"18585816540"}}
+	//value:=url.Values{"id": {"55cc4cc6e138237243000054"},"show_id":{"tomtest"},"name": {"zhanghuawen"},"source_id": {"funzhou_0001"},"company_name": {"infobird"},"job":{"yanfa"},"haha":{"yanfa66"},"company_addr":{""},"email":{"18984550008@qq.com"},"mobile":{"18984550008"}}
+	value:=url.Values{"id": {"55cc4cc6e138237243000054"},"show_id":{"tomtest"},"name": {"tomzhao"},"company_name": {"infobird"},"job":{"yanfa"},"company_addr":{""},"email":{"18585816540@qq.com"},"mobile":{"18585816540"}}
 	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/set_user_info",value)
 	if err!=nil {
 		fmt.Println(err)
@@ -152,8 +152,10 @@ func main() {
 	}
 	fmt.Println(strBody)	
 	
-	//value:=url.Values{"id": {"561b1f35e138232394000001"},"show_id":{"tomtest"}}
-	value:=url.Values{"haha": {"yanfa66"},"show_id":{"tomtest"}}
+	value:=url.Values{"id": {"55cc4cc6e138237243000054"},"show_id":{"tomtest"}}
+	//value:=url.Values{"id": {"55cc4cc6e138237243000054"}}
+	//value:=url.Values{"mobile": {"18585816540"},"show_id":{"tomtest"}}
+	//value:=url.Values{"mobile": {"18585816540"}}
 	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/get_user_info",value)
 	if err!=nil {
 		fmt.Println(err)
@@ -173,14 +175,14 @@ func main() {
 		return
 	}
 	fmt.Println(strBody)	
-
-	value:=url.Values{"user_list": {"561b1f35e138232394000001,56188ea3e1382317b3000001"}}
+*/
+	value:=url.Values{"user_list": {"5618756de138232ed4000d2c,55cc4cc6e138237243000054"},"show_id":{"tomtest"}}
 	strBody,err:=common.Invoker(common.HTTP_POST,"https://connect.funzhou.cn/user/get_user_list",value)
 	if err!=nil {
 		fmt.Println(err)
 		return
 	}
 	fmt.Println(strBody)	
-*/
+
 
 }
