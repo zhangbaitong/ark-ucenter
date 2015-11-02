@@ -99,7 +99,7 @@ func main() {
 	
 	go func() {
 		//start http server
-		fmt.Println("Http Server is start at ", time.Now().String(), " , on port 80")
+		fmt.Println("Http Server is start at ", time.Now().String(), " , on port ",port)
 		web_server:=fmt.Sprintf(":%d",port)
 		log.Fatal(http.ListenAndServe(web_server,  router))
 	}()
